@@ -1,21 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import Image from "next/image";
 import { fetchApi } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
-
-const getImageUrl = (image) => {
-  if (!image) return "/placeholder.jpg";
-  if (image.startsWith("http")) return image;
-  return `https://desirediv-storage.blr1.digitaloceanspaces.com/${image}`;
-};
+import { getImageUrl } from "@/lib/imageUrl";
+import { ArrowRight } from "lucide-react";
 
 export default function CategoriesCarousel() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [scrollPosition, setScrollPosition] = useState(0);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -31,82 +25,69 @@ export default function CategoriesCarousel() {
     fetchCategories();
   }, []);
 
-  const scroll = (direction) => {
-    const container = document.getElementById("categories-carousel-container");
-    if (container) {
-      const scrollAmount = 200;
-      const newPosition = direction === "left" 
-        ? container.scrollLeft - scrollAmount 
-        : container.scrollLeft + scrollAmount;
-      container.scrollTo({ left: newPosition, behavior: "smooth" });
-      setScrollPosition(newPosition);
-    }
-  };
-
   if (loading) {
     return (
-      <div className="w-full py-6 max-w-7xl mx-auto">
-        <div className="flex gap-4 overflow-hidden">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="flex-shrink-0 w-24 h-28 bg-gray-100 rounded-xl animate-pulse"></div>
-          ))}
+      <section className="py-8 bg-white border-b border-gray-100">
+        <div className="section-container">
+          <div className="flex gap-4 overflow-hidden">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex-shrink-0 w-32 h-32 rounded-2xl bg-gray-100 animate-pulse" />
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
     );
   }
 
-  if (categories.length === 0) return null;
+  if (!categories.length) return null;
 
   return (
-    <div className="w-full py-6 relative group max-w-7xl mx-auto">
-      {/* Left Arrow */}
-      <button
-        onClick={() => scroll("left")}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-50 border border-gray-200"
-      >
-        <ChevronLeft className="h-5 w-5 text-gray-700" />
-      </button>
-
-      {/* Categories Container */}
-      <div
-        id="categories-carousel-container"
-        className="flex gap-4 overflow-x-auto scrollbar-hide px-2"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-      >
-        {categories.map((category) => (
-          <Link
-            key={category.id}
-            href={`/category/${category.slug}`}
-            className="flex-shrink-0 flex flex-col items-center group/item"
-          >
-            <div className="relative w-20 h-20 lg:w-28 lg:h-28 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 group-hover/item:border-primary group-hover/item:shadow-lg transition-all duration-300">
-              {category.image ? (
-                <Image
-                  src={getImageUrl(category.image)}
-                  alt={category.name}
-                  fill
-                  className="object-contain p-3 transition-transform group-hover/item:scale-110"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Zap className="w-8 h-8 text-primary/40" />
-                </div>
-              )}
-            </div>
-            <span className="mt-2 text-xs lg:text-sm text-center font-medium text-gray-700 group-hover/item:text-primary transition-colors line-clamp-2 max-w-[80px] lg:max-w-[100px]">
-              {category.name}
-            </span>
+    <section className="py-8 bg-white border-b border-gray-100">
+      <div className="section-container">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-lg md:text-xl font-display font-bold text-gray-900">Shop by Category</h2>
+          </div>
+          <Link href="/categories" className="flex items-center gap-1 text-primary text-sm font-semibold hover:gap-2 transition-all">
+            View All <ArrowRight className="w-4 h-4" />
           </Link>
-        ))}
+        </div>
+
+        <div className="relative">
+          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+            {categories.slice(0, 10).map((category) => (
+              <Link 
+                key={category.id} 
+                href={`/category/${category.slug}`}
+                className="flex-shrink-0 snap-start group"
+              >
+                <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden bg-gray-100">
+                  <Image
+                    src={getImageUrl(category.image)}
+                    alt={category.name}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-primary/80 transition-all duration-300" />
+                  <div className="absolute inset-0 flex items-end p-3">
+                    <p className="text-white text-sm font-semibold leading-tight">{category.name}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Right Arrow */}
-      <button
-        onClick={() => scroll("right")}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-50 border border-gray-200"
-      >
-        <ChevronRight className="h-5 w-5 text-gray-700" />
-      </button>
-    </div>
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+    </section>
   );
 }

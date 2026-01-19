@@ -4,14 +4,11 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchApi, formatCurrency } from "@/lib/utils";
+import { getImageUrl } from "@/lib/imageUrl";
 import { Clock, Zap, ChevronRight, Loader2, Flame, Timer, ShoppingBag } from "lucide-react";
 
 // Helper function to format image URLs
-const getImageUrl = (image) => {
-    if (!image) return "/placeholder.jpg";
-    if (image.startsWith("http")) return image;
-    return `https://desirediv-storage.blr1.digitaloceanspaces.com/${image}`;
-};
+
 
 // Premium Countdown Timer Component
 const CountdownTimer = ({ endTime }) => {

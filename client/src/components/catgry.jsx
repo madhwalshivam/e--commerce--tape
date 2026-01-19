@@ -2,15 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { getImageUrl } from "@/lib/imageUrl";
 import Link from "next/link";
 import { fetchApi } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
 
-const getImageUrl = (image) => {
-  if (!image) return "/placeholder.jpg";
-  if (image.startsWith("http")) return image;
-  return `https://desirediv-storage.blr1.digitaloceanspaces.com/${image}`;
-};
+
 
 export default function CategoriesCarousel() {
   const [categories, setCategories] = useState([]);

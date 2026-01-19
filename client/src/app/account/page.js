@@ -6,9 +6,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ClientOnly } from "@/components/client-only";
-import { DynamicIcon } from "@/components/dynamic-icon";
 import { fetchApi, formatDate } from "@/lib/utils";
 import { ProtectedRoute } from "@/components/protected-route";
+import { User, MapPin, Lock, Edit, Package, Users, Copy, Check, Heart, ArrowRight } from "lucide-react";
 
 export default function AccountPage() {
     const { user, updateProfile } = useAuth();
@@ -77,116 +77,191 @@ export default function AccountPage() {
         } finally { setIsSubmitting(false); }
     };
 
+    const menuItems = [
+        { icon: Package, label: "My Orders", href: "/account/orders", desc: "View order history" },
+        { icon: MapPin, label: "Addresses", href: "/account/addresses", desc: "Manage shipping addresses" },
+        { icon: Heart, label: "Wishlist", href: "/wishlist", desc: "View saved items" },
+        { icon: Lock, label: "Security", href: "/account/change-password", desc: "Change password" },
+    ];
+
     return (
         <ProtectedRoute>
             <ClientOnly>
-                <div className="container mx-auto py-10 px-4">
-                    <h1 className="text-3xl font-bold mb-8">My Profile</h1>
+                <div className="min-h-screen bg-gray-50">
+                    {/* Header */}
+                    <section className="py-8 bg-[#2D2D2D]">
+                        <div className="section-container">
+                            <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
+                                    {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                                </div>
+                                <div>
+                                    <h1 className="text-xl md:text-2xl font-bold text-white">{user?.name || "User"}</h1>
+                                    <p className="text-gray-400 text-sm">{user?.email}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
 
-                    {/* Profile information */}
-                    <div className="bg-white rounded-lg shadow mb-8">
-                        <div className="p-4 lg:p-6">
-                            <div className="flex justify-between gap-2 items-center mb-6">
-                                <h2 className="text-xl font-semibold">Profile Information</h2>
-                                {!isEditing && <Button variant="outline" onClick={() => setIsEditing(true)} size="sm"><DynamicIcon name="Edit" className="mr-2 h-4 w-4" />Edit Profile</Button>}
+                    <div className="section-container py-8">
+                        {/* Quick Links */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                            {menuItems.map((item, index) => (
+                                <Link key={index} href={item.href} className="card-premium p-4 hover:border-primary/20">
+                                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-3">
+                                        <item.icon className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <h3 className="font-semibold text-gray-900 text-sm mb-0.5">{item.label}</h3>
+                                    <p className="text-xs text-gray-500">{item.desc}</p>
+                                </Link>
+                            ))}
+                        </div>
+
+                        {/* Profile Information */}
+                        <div className="card-premium p-6 mb-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-lg font-bold text-gray-900">Profile Information</h2>
+                                {!isEditing && (
+                                    <Button variant="outline" onClick={() => setIsEditing(true)} size="sm" className="gap-2">
+                                        <Edit className="h-4 w-4" /> Edit
+                                    </Button>
+                                )}
                             </div>
 
-                            {message.text && <div className={`mb-4 p-3 rounded ${message.type === "success" ? "bg-green-50 text-green-800 border border-green-200" : "bg-red-50 text-red-800 border border-red-200"}`}>{message.text}</div>}
+                            {message.text && (
+                                <div className={`mb-4 p-3 rounded-xl text-sm ${message.type === "success" ? "bg-green-50 text-green-800 border border-green-200" : "bg-red-50 text-red-800 border border-red-200"}`}>
+                                    {message.text}
+                                </div>
+                            )}
 
                             {isEditing ? (
-                                <form onSubmit={handleSubmit} className="mt-4">
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <div><label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label><Input id="name" name="name" type="text" value={formData.name} onChange={handleChange} /></div>
-                                        <div><label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label><Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} /></div>
-                                        <div className="lg:col-span-2 flex gap-2 justify-end mt-4">
-                                            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Saving..." : "Save Changes"}</Button>
-                                            <Button type="button" variant="outline" onClick={() => { setIsEditing(false); setPreview(null); setFormData({ name: user?.name || "", phone: user?.phone || "", profileImage: null }); }}>Cancel</Button>
+                                <form onSubmit={handleSubmit}>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+                                            <Input name="name" type="text" value={formData.name} onChange={handleChange} className="input-premium" />
                                         </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
+                                            <Input name="phone" type="tel" value={formData.phone} onChange={handleChange} className="input-premium" />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 justify-end">
+                                        <Button type="submit" className="btn-primary" disabled={isSubmitting}>
+                                            {isSubmitting ? "Saving..." : "Save Changes"}
+                                        </Button>
+                                        <Button type="button" variant="outline" onClick={() => { setIsEditing(false); setPreview(null); setFormData({ name: user?.name || "", phone: user?.phone || "", profileImage: null }); }}>
+                                            Cancel
+                                        </Button>
                                     </div>
                                 </form>
                             ) : (
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <div><h3 className="text-sm font-medium text-gray-500">Full Name</h3><p className="mt-1 text-base">{user?.name || "Not provided"}</p></div>
-                                        <div><h3 className="text-sm font-medium text-gray-500">Email Address</h3><p className="mt-1 text-base">{user?.email || "Not provided"}</p></div>
-                                        <div><h3 className="text-sm font-medium text-gray-500">Phone Number</h3><p className="mt-1 text-base">{user?.phone || "Not provided"}</p></div>
-                                        <div><h3 className="text-sm font-medium text-gray-500">Member Since</h3><p className="mt-1 text-base">{user?.createdAt ? formatDate(user.createdAt) : "Unknown"}</p></div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div>
+                                        <p className="text-sm text-gray-500 mb-1">Full Name</p>
+                                        <p className="font-medium text-gray-900">{user?.name || "Not provided"}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500 mb-1">Email</p>
+                                        <p className="font-medium text-gray-900">{user?.email || "Not provided"}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500 mb-1">Phone</p>
+                                        <p className="font-medium text-gray-900">{user?.phone || "Not provided"}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500 mb-1">Member Since</p>
+                                        <p className="font-medium text-gray-900">{user?.createdAt ? formatDate(user.createdAt) : "Unknown"}</p>
                                     </div>
                                 </div>
                             )}
                         </div>
-                    </div>
 
-                    {/* Recent addresses */}
-                    <div className="bg-white rounded-lg shadow mb-8">
-                        <div className="p-4 lg:p-6">
-                            <div className="flex justify-between gap-2 items-center mb-4">
-                                <h2 className="text-lg lg:text-xl font-semibold">Saved Addresses</h2>
-                                <Link href="/account/addresses"><Button variant="outline" size="sm" className="text-wrap py-2">Manage Addresses</Button></Link>
+                        {/* Addresses */}
+                        <div className="card-premium p-6 mb-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-lg font-bold text-gray-900">Saved Addresses</h2>
+                                <Link href="/account/addresses">
+                                    <Button variant="outline" size="sm" className="gap-1">
+                                        Manage <ArrowRight className="w-4 h-4" />
+                                    </Button>
+                                </Link>
                             </div>
 
                             {addresses.length > 0 ? (
                                 <div className="grid gap-4">
                                     {addresses.slice(0, 2).map((address) => (
-                                        <div key={address.id} className="border rounded-md p-3 flex justify-between items-start">
-                                            <div>
-                                                {address.isDefault && <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-md mb-2">Default</span>}
-                                                <p className="font-medium">{address.name || user?.name}</p>
-                                                <p className="text-sm text-gray-600">{address.street}, {address.city}, {address.state} {address.postalCode}</p>
-                                                <p className="text-sm text-gray-600">{address.country}</p>
-                                            </div>
+                                        <div key={address.id} className="border border-gray-100 rounded-xl p-4">
+                                            {address.isDefault && (
+                                                <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-md mb-2 font-medium">Default</span>
+                                            )}
+                                            <p className="font-medium text-gray-900">{address.name || user?.name}</p>
+                                            <p className="text-sm text-gray-600">{address.street}, {address.city}, {address.state} {address.postalCode}</p>
+                                            <p className="text-sm text-gray-600">{address.country}</p>
                                         </div>
                                     ))}
-                                    {addresses.length > 2 && <p className="text-sm text-gray-600">+ {addresses.length - 2} more addresses</p>}
+                                    {addresses.length > 2 && <p className="text-sm text-gray-500">+ {addresses.length - 2} more addresses</p>}
                                 </div>
                             ) : (
-                                <div className="text-center py-6 border rounded-md">
-                                    <DynamicIcon name="MapPin" className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                                    <p className="text-gray-600">No addresses added yet</p>
-                                    <Link href="/account/addresses" className="mt-2 inline-block"><Button variant="outline" size="sm" className="mt-2">Add Address</Button></Link>
+                                <div className="text-center py-8 border border-dashed border-gray-200 rounded-xl">
+                                    <MapPin className="h-8 w-8 mx-auto text-gray-300 mb-2" />
+                                    <p className="text-gray-500 text-sm">No addresses added yet</p>
+                                    <Link href="/account/addresses">
+                                        <Button variant="outline" size="sm" className="mt-3">Add Address</Button>
+                                    </Link>
                                 </div>
                             )}
                         </div>
-                    </div>
 
-                    {/* Referral Program */}
-                    <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow mb-8">
-                        <div className="p-4 lg:p-6">
-                            <div className="flex items-center gap-2 mb-4"><DynamicIcon name="Users" className="h-6 w-6 text-green-600" /><h2 className="text-xl font-semibold">Referral Program</h2></div>
-                            <p className="text-gray-600 mb-6">Share your referral code with friends and earn rewards when they make their first order!</p>
+                        {/* Referral Program */}
+                        <div className="bg-gradient-to-r from-primary/5 via-orange-50 to-primary/5 rounded-2xl p-6 border border-primary/10">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Users className="h-5 w-5 text-primary" />
+                                <h2 className="text-lg font-bold text-gray-900">Referral Program</h2>
+                            </div>
+                            <p className="text-gray-600 text-sm mb-4">Share your referral code and earn rewards!</p>
 
                             {isLoadingReferral ? (
-                                <div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+                                <div className="flex items-center justify-center py-6">
+                                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                </div>
                             ) : (
                                 <>
-                                    <div className="bg-white rounded-lg p-4 mb-6 border-2 border-green-200">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Your Referral Code</label>
+                                    <div className="bg-white rounded-xl p-4 border border-primary/20 mb-4">
+                                        <label className="block text-xs font-medium text-gray-500 mb-2">Your Referral Code</label>
                                         <div className="flex items-center gap-2">
                                             <Input value={referralCode} readOnly className="font-mono text-lg font-bold bg-gray-50" />
-                                            <Button onClick={() => { navigator.clipboard.writeText(referralCode); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="min-w-[100px]">
-                                                {copied ? <><DynamicIcon name="Check" className="h-4 w-4 mr-2" />Copied!</> : <><DynamicIcon name="Copy" className="h-4 w-4 mr-2" />Copy</>}
+                                            <Button
+                                                onClick={() => { navigator.clipboard.writeText(referralCode); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                                                className={copied ? "bg-green-500 hover:bg-green-600" : "btn-primary"}
+                                            >
+                                                {copied ? <><Check className="h-4 w-4 mr-1" /> Copied</> : <><Copy className="h-4 w-4 mr-1" /> Copy</>}
                                             </Button>
                                         </div>
                                     </div>
 
                                     {referralStats && (
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            <div className="bg-white rounded-lg p-4 text-center border"><p className="text-2xl font-bold text-green-600">{referralStats.totalReferrals || 0}</p><p className="text-sm text-gray-600 mt-1">Total Referrals</p></div>
-                                            <div className="bg-white rounded-lg p-4 text-center border"><p className="text-2xl font-bold text-blue-600">{referralStats.completedReferrals || 0}</p><p className="text-sm text-gray-600 mt-1">Completed</p></div>
-                                            <div className="bg-white rounded-lg p-4 text-center border"><p className="text-2xl font-bold text-yellow-600">{referralStats.pendingReferrals || 0}</p><p className="text-sm text-gray-600 mt-1">Pending</p></div>
-                                            <div className="bg-white rounded-lg p-4 text-center border"><p className="text-2xl font-bold text-green-600">₹{parseFloat(referralStats.totalEarnings || 0).toFixed(2)}</p><p className="text-sm text-gray-600 mt-1">Total Earnings</p></div>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            <div className="bg-white rounded-xl p-3 text-center border">
+                                                <p className="text-xl font-bold text-primary">{referralStats.totalReferrals || 0}</p>
+                                                <p className="text-xs text-gray-500">Total Referrals</p>
+                                            </div>
+                                            <div className="bg-white rounded-xl p-3 text-center border">
+                                                <p className="text-xl font-bold text-green-600">{referralStats.completedReferrals || 0}</p>
+                                                <p className="text-xs text-gray-500">Completed</p>
+                                            </div>
+                                            <div className="bg-white rounded-xl p-3 text-center border">
+                                                <p className="text-xl font-bold text-yellow-600">{referralStats.pendingReferrals || 0}</p>
+                                                <p className="text-xs text-gray-500">Pending</p>
+                                            </div>
+                                            <div className="bg-white rounded-xl p-3 text-center border">
+                                                <p className="text-xl font-bold text-primary">₹{parseFloat(referralStats.totalEarnings || 0).toFixed(0)}</p>
+                                                <p className="text-xs text-gray-500">Earnings</p>
+                                            </div>
                                         </div>
                                     )}
                                 </>
                             )}
-                        </div>
-                    </div>
-
-                    {/* Security section */}
-                    <div className="bg-white rounded-lg shadow">
-                        <div className="p-6">
-                            <h2 className="text-xl font-semibold mb-4">Security</h2>
-                            <Link href="/account/change-password"><Button variant="outline" className="w-full sm:w-auto"><DynamicIcon name="Lock" className="mr-2 h-4 w-4" />Change Password</Button></Link>
                         </div>
                     </div>
                 </div>

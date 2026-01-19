@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { formatCurrency, debugData, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/context/LanguageContext";
+import { getImageUrl } from "@/utils/image";
 
 export default function OrderDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -360,31 +361,7 @@ export default function OrderDetailsPage() {
     }
   };
 
-  // Get image URL helper
-  const getImageUrl = (image: string | string[] | undefined | null): string => {
-    if (!image) return "/images/product-placeholder.jpg";
 
-    // Handle array of images (take first one)
-    if (Array.isArray(image)) {
-      if (image.length === 0) return "/images/product-placeholder.jpg";
-      const firstImage = image[0];
-      if (typeof firstImage === "string") {
-        return firstImage.startsWith("http")
-          ? firstImage
-          : `https://desirediv-storage.blr1.digitaloceanspaces.com/${firstImage}`;
-      }
-      return "/images/product-placeholder.jpg";
-    }
-
-    // Handle single image string
-    if (typeof image === "string") {
-      return image.startsWith("http")
-        ? image
-        : `https://desirediv-storage.blr1.digitaloceanspaces.com/${image}`;
-    }
-
-    return "/images/product-placeholder.jpg";
-  };
 
   // Loading state
   if (isLoading && !orderDetails) {

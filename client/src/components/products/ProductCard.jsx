@@ -4,17 +4,11 @@ import Link from "next/link";
 import {  Heart, Loader2 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { fetchApi, formatCurrency } from "@/lib/utils";
+import { getImageUrl } from "@/lib/imageUrl";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-
-// Helper function to format image URLs correctly
-const getImageUrl = (image) => {
-  if (!image) return "/placeholder.jpg";
-  if (image.startsWith("http")) return image;
-  return `https://desirediv-storage.blr1.digitaloceanspaces.com/${image}`;
-};
 
 // Helper function to calculate discount percentage
 const calculateDiscountPercentage = (regularPrice, salePrice) => {

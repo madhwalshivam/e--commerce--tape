@@ -1,18 +1,14 @@
 import { fetchApi } from "@/lib/utils";
 import ProductContent from "./ProductContent";
+import { getImageUrl } from "@/lib/imageUrl";
 
-// Helper function to format image URLs correctly
-const getImageUrl = (image) => {
-    if (!image) return null;
-    if (image.startsWith("http")) return image;
-    return `https://desirediv-storage.blr1.digitaloceanspaces.com/${image}`;
-};
+
 
 export async function generateMetadata({ params }) {
     const { slug } = params;
-    let title = "Product Details | DJ-Challenger";
+    let title = "Product Details | DfixKart";
     let description =
-        "Professional P.A systems, DJ speakers, amplifiers, driver units and audio equipment. Leading manufacturer trusted by professionals worldwide.";
+        "Shop premium quality products at DfixKart. Fast delivery, secure payments, and 100% genuine products.";
     let image = null;
 
     try {
@@ -21,7 +17,7 @@ export async function generateMetadata({ params }) {
         const product = response.data.product;
 
         if (product) {
-            title = product.metaTitle || `${product.name} | DJ-Challenger`;
+            title = product.metaTitle || `${product.name} | DfixKart`;
             description =
                 product.metaDescription || product.description || description;
 

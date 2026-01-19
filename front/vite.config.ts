@@ -16,16 +16,16 @@ export default defineConfig({
     port: 4173,
     host: "0.0.0.0",
     allowedHosts: [
-      "admin.djchallenger.in",
-      "www.admin.djchallenger.in",
+      "admin.dfixkart.com",
+      "www.admin.dfixkart.com",
     ],
   },
   // Add server configuration for development
   server: {
     host: "0.0.0.0",
     allowedHosts: [
-      "admin.djchallenger.in",
-      "www.admin.djchallenger.in",
+      "admin.dfixkart.com",
+      "www.admin.dfixkart.com",
     ],
   },
 });

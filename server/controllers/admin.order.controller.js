@@ -251,7 +251,8 @@ export const getOrderById = asyncHandler(async (req, res, next) => {
   const getImageUrl = (image) => {
     if (!image) return null;
     if (image.startsWith("http")) return image;
-    return `https://desirediv-storage.blr1.digitaloceanspaces.com/${image}`;
+    const storageUrl = process.env.R2_PUBLIC_URL || "";
+    return `${storageUrl}/${image}`;
   };
 
   // Process order items to include proper image URLs

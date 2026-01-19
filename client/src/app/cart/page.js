@@ -17,13 +17,9 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { getImageUrl } from "@/lib/imageUrl";
 
-// Helper function to format image URLs correctly
-const getImageUrl = (image) => {
-    if (!image) return "/placeholder.jpg";
-    if (image.startsWith("http")) return image;
-    return `https://desirediv-storage.blr1.digitaloceanspaces.com/${image}`;
-};
+
 
 // Cart item component to optimize re-renders
 const CartItem = React.memo(

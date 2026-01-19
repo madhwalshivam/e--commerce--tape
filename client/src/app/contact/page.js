@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Phone, Mail, Clock, Send, Loader2, MessageSquare, Headphones, Zap, ArrowRight } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Send, Loader2, MessageSquare, Headphones, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { fetchApi } from "@/lib/utils";
@@ -32,10 +32,9 @@ export default function ContactPage() {
                 body: JSON.stringify(formData),
             });
 
-            toast.success(response.data?.message || "Your message has been sent!");
+            toast.success(response.data?.message || "Message sent successfully!");
             setFormData({ name: "", email: "", phone: "", subject: "Product Inquiry", message: "" });
         } catch (error) {
-            console.error("Error submitting form:", error);
             toast.error(error.message || "Something went wrong. Please try again.");
         } finally {
             setFormLoading(false);
@@ -44,136 +43,126 @@ export default function ContactPage() {
 
     return (
         <div className="min-h-screen bg-white">
-            {/* Hero Section */}
-            <section className="relative py-16 md:py-20 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
-                <div className="absolute inset-0 opacity-30">
-                    <div className="absolute top-20 right-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
-                    <div className="absolute bottom-10 left-20 w-60 h-60 bg-orange-100 rounded-full blur-3xl" />
-                </div>
-
-                <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary text-sm font-medium mb-6">
+            {/* Hero */}
+            <section className="py-16 md:py-20 bg-gradient-section">
+                <div className="section-container text-center">
+                    <span className="section-badge mb-4">
                         <MessageSquare className="w-4 h-4" />
-                        We&apos;re Here to Help
-                    </div>
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                        Get in <span className="text-primary">Touch</span>
+                        Get in Touch
+                    </span>
+                    <h1 className="text-3xl md:text-4xl font-display font-bold text-gray-900 mb-4">
+                        Contact <span className="text-primary">Us</span>
                     </h1>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Have questions about our products? Need a quote for bulk orders? Our team is ready to assist you.
+                    <p className="text-gray-600 max-w-xl mx-auto">
+                        Have questions? We are here to help. Reach out to us anytime.
                     </p>
                 </div>
             </section>
 
             {/* Contact Cards */}
-            <section className="max-w-7xl mx-auto px-4 -mt-4 pb-12">
-                <div className="grid md:grid-cols-2 gap-6">
-                    {/* Email */}
-                    <a href="mailto:DjChallengerIndia@gmail.com" className="group bg-white rounded-2xl p-6 border border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-center">
-                        <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
-                            <Mail className="h-6 w-6 text-primary" />
+            <section className="section-container -mt-6 pb-12">
+                <div className="grid md:grid-cols-3 gap-4">
+                    <a href="mailto:support@dfixkart.com" className="card-premium p-6 text-center hover:border-primary/20 group">
+                        <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary group-hover:text-white transition-all">
+                            <Mail className="h-6 w-6 text-primary group-hover:text-white" />
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">Email Us</h3>
-                        <p className="text-primary font-semibold text-sm mb-1 break-all">DjChallengerIndia@gmail.com</p>
-                        <p className="text-gray-500 text-sm">We reply within 24 hours</p>
+                        <h3 className="font-bold text-gray-900 mb-1">Email Us</h3>
+                        <p className="text-primary font-medium text-sm">support@dfixkart.com</p>
                     </a>
 
-                    {/* Location */}
-                    <div className="group bg-white rounded-2xl p-6 border border-gray-200 text-center">
-                        <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                            <MapPin className="h-6 w-6 text-primary" />
+                    <a href="tel:+919650509356" className="card-premium p-6 text-center hover:border-primary/20 group">
+                        <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-green-500 transition-all">
+                            <Phone className="h-6 w-6 text-green-600 group-hover:text-white" />
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">Visit Us</h3>
-                        <p className="text-gray-700 font-medium mb-1">Industrial Area, Delhi NCR</p>
-                        <p className="text-gray-500 text-sm">India - 110001</p>
+                        <h3 className="font-bold text-gray-900 mb-1">Call Us</h3>
+                        <p className="text-green-600 font-medium text-sm">+91 9650509356</p>
+                    </a>
+
+                    <div className="card-premium p-6 text-center">
+                        <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <MapPin className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <h3 className="font-bold text-gray-900 mb-1">Location</h3>
+                        <p className="text-gray-600 text-sm">New Delhi, India</p>
                     </div>
                 </div>
             </section>
 
-            {/* Contact Form Section */}
-            <section className="py-12 bg-gray-50">
-                <div className="max-w-7xl mx-auto px-4">
+            {/* Contact Form */}
+            <section className="section-padding bg-gradient-section">
+                <div className="section-container">
                     <div className="grid lg:grid-cols-5 gap-10">
-                        {/* Left Side - Info */}
+                        {/* Left */}
                         <div className="lg:col-span-2">
-                            <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-sm font-semibold rounded-full mb-4">Contact Form</span>
-                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-                                Send Us a Message
-                            </h2>
-                            <p className="text-gray-600 mb-8 leading-relaxed">
+                            <span className="section-badge mb-4">Send a Message</span>
+                            <h2 className="section-title mb-4">Have a Question?</h2>
+                            <p className="text-gray-600 mb-8">
                                 Fill out the form and our team will get back to you within 24 hours.
                             </p>
 
-                            {/* Features */}
                             <div className="space-y-4">
-                                <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-11 h-11 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
                                         <Headphones className="h-5 w-5 text-primary" />
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-gray-900">Expert Support</h4>
-                                        <p className="text-sm text-gray-500">Get advice from our audio specialists</p>
+                                        <h4 className="font-semibold text-gray-900 text-sm">Expert Support</h4>
+                                        <p className="text-gray-500 text-xs">Get help from our specialists</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <Zap className="h-5 w-5 text-primary" />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold text-gray-900">Fast Response</h4>
-                                        <p className="text-sm text-gray-500">We respond within 24 hours</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-11 h-11 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
                                         <Clock className="h-5 w-5 text-primary" />
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-gray-900">Business Hours</h4>
-                                        <p className="text-sm text-gray-500">Mon-Sat: 9:00 AM - 7:00 PM</p>
+                                        <h4 className="font-semibold text-gray-900 text-sm">Business Hours</h4>
+                                        <p className="text-gray-500 text-xs">Mon-Sat: 9 AM - 7 PM</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Right Side - Form */}
+                        {/* Form */}
                         <div className="lg:col-span-3">
-                            <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-200">
+                            <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-100 shadow-sm">
                                 <form onSubmit={handleSubmit} className="space-y-5">
-                                    <div className="grid md:grid-cols-2 gap-5">
+                                    <div className="grid md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name *</label>
-                                            <input type="text" name="name" value={formData.name} onChange={handleInputChange} required placeholder="John Doe" className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all" />
+                                            <input type="text" name="name" value={formData.name} onChange={handleInputChange} required placeholder="John Doe" className="input-premium" />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number *</label>
-                                            <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required placeholder="+91 9876543210" className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all" />
+                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone *</label>
+                                            <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required placeholder="+91 9876543210" className="input-premium" />
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address *</label>
-                                        <input type="email" name="email" value={formData.email} onChange={handleInputChange} required placeholder="john@example.com" className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all" />
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Email *</label>
+                                        <input type="email" name="email" value={formData.email} onChange={handleInputChange} required placeholder="you@example.com" className="input-premium" />
                                     </div>
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Subject</label>
-                                        <select name="subject" value={formData.subject} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all">
+                                        <select name="subject" value={formData.subject} onChange={handleInputChange} className="input-premium">
                                             <option>Product Inquiry</option>
-                                            <option>Bulk Order Quote</option>
-                                            <option>Technical Support</option>
-                                            <option>Order Status</option>
+                                            <option>Order Support</option>
+                                            <option>Return/Refund</option>
                                             <option>Other</option>
                                         </select>
                                     </div>
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Message *</label>
-                                        <textarea name="message" value={formData.message} onChange={handleInputChange} required rows={4} placeholder="Tell us how we can help you..." className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all resize-none" />
+                                        <textarea name="message" value={formData.message} onChange={handleInputChange} required rows={4} placeholder="Your message..." className="input-premium resize-none" />
                                     </div>
 
-                                    <Button type="submit" size="lg" className="w-full h-12 rounded-xl font-semibold gap-2 bg-primary hover:bg-primary/90" disabled={formLoading}>
-                                        {formLoading ? <><Loader2 className="h-5 w-5 animate-spin" />Sending...</> : <><Send className="h-5 w-5" />Send Message</>}
+                                    <Button type="submit" size="lg" className="w-full btn-primary h-12 gap-2" disabled={formLoading}>
+                                        {formLoading ? (
+                                            <><Loader2 className="h-5 w-5 animate-spin" /> Sending...</>
+                                        ) : (
+                                            <><Send className="h-5 w-5" /> Send Message</>
+                                        )}
                                     </Button>
                                 </form>
                             </div>
@@ -182,17 +171,17 @@ export default function ContactPage() {
                 </div>
             </section>
 
-            {/* CTA Section */}
-            <section className="py-12 bg-primary/5 border-t border-primary/10">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="text-center md:text-left">
-                            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">Ready to upgrade your sound?</h2>
-                            <p className="text-gray-600">Browse our collection of professional audio equipment</p>
+            {/* CTA */}
+            <section className="section-padding-sm bg-white border-t border-gray-100">
+                <div className="section-container">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900 mb-1">Ready to shop?</h2>
+                            <p className="text-gray-600 text-sm">Browse our collection of premium products</p>
                         </div>
                         <Link href="/products">
-                            <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-6 h-12 rounded-xl font-semibold gap-2">
-                                Browse Products <ArrowRight className="h-5 w-5" />
+                            <Button size="lg" className="btn-primary h-12 px-8 gap-2">
+                                Browse Products <ArrowRight className="w-4 h-4" />
                             </Button>
                         </Link>
                     </div>

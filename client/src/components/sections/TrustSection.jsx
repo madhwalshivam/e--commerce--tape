@@ -1,87 +1,53 @@
-import { Star, Quote } from "lucide-react";
+"use client";
 
-const stats = [
-  { value: "25+", label: "Years of Excellence" },
-  { value: "50,000+", label: "Happy Customers" },
-  { value: "500+", label: "Products" },
-  { value: "50+", label: "Countries" }
-];
+import { Truck, Shield, RotateCcw, CreditCard, Headphones, Award } from "lucide-react";
 
-const testimonials = [
+const trustItems = [
   {
-    name: "Rajesh Sharma",
-    role: "Event Organizer, Mumbai",
-    text: "DJ-Challenger speakers have been our go-to for 5 years. Unmatched quality at factory prices.",
-    rating: 5
+    icon: Truck,
+    title: "Free Shipping",
+    description: "Free delivery on orders above ₹999",
   },
   {
-    name: "Vikram Singh",
-    role: "Professional DJ, Delhi",
-    text: "The sound clarity and power of these speakers is incredible. Best investment I have made.",
-    rating: 5
+    icon: Shield,
+    title: "100% Genuine",
+    description: "Authentic products guaranteed",
   },
   {
-    name: "Priya Patel",
-    role: "Wedding Planner, Ahmedabad",
-    text: "Reliable, powerful, and great support. We use DJ-Challenger for all our events.",
-    rating: 5
-  }
+    icon: RotateCcw,
+    title: "Easy Returns",
+    description: "30-day hassle-free returns",
+  },
+  {
+    icon: CreditCard,
+    title: "Secure Payment",
+    description: "SSL encrypted checkout",
+  },
 ];
 
-export const TrustSection = () => {
+export function TrustSection() {
   return (
-    <section className="section-padding bg-foreground text-white">
+    <section className="section-padding-sm bg-[#2D2D2D]">
       <div className="section-container">
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20">
-          {stats.map((stat, index) => (
-            <div key={index} className="text-center">
-              <p className="font-display text-4xl md:text-5xl font-bold text-primary mb-2">
-                {stat.value}
-              </p>
-              <p className="text-white/60">
-                {stat.label}
-              </p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {trustItems.map((item, index) => (
+            <div
+              key={index}
+              className="flex flex-col md:flex-row items-center md:items-start gap-4 p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 text-center md:text-left"
+            >
+              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <item.icon className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white mb-1">{item.title}</h3>
+                <p className="text-gray-400 text-sm">{item.description}</p>
+              </div>
             </div>
           ))}
-        </div>
-
-        {/* Testimonials */}
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-sm font-medium text-primary uppercase tracking-wide mb-2">
-              Testimonials
-            </p>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-white">
-              Trusted by Professionals
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-white/5 backdrop-blur-sm rounded-2xl p-6">
-                <Quote className="h-8 w-8 text-primary/40 mb-4" />
-                
-                {/* Stars */}
-                <div className="flex gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                  ))}
-                </div>
-                
-                <p className="text-white/80 mb-6 leading-relaxed">
-                  &quot;{testimonial.text}&quot;
-                </p>
-                
-                <div>
-                  <p className="font-semibold text-white">{testimonial.name}</p>
-                  <p className="text-sm text-white/50">{testimonial.role}</p>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </section>
   );
-};
+}
+
+export default TrustSection;

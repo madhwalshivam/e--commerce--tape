@@ -62,7 +62,7 @@ app.use((req, res, next) => {
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
-  : ['https://djchallenger.in', 'https://admin.djchallenger.in'];
+  : ['https://api.dfixkart.com', 'https://admin.dfixkart.com'];
 
 app.use(
   cors({

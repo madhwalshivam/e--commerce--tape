@@ -1,5 +1,5 @@
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-import s3client from "./s3client.js";
+import s3client, { BUCKET_NAME, PUBLIC_URL } from "./s3client.js";
 
 export const deleteFromS3 = async (fileUrl) => {
   try {
@@ -17,23 +17,26 @@ export const deleteFromS3 = async (fileUrl) => {
 
     await s3client.send(
       new DeleteObjectCommand({
-        Bucket: process.env.SPACES_BUCKET,
+        Bucket: BUCKET_NAME,
         Key,
       })
     );
 
-    console.log(`Successfully deleted file: ${Key}`);
+    console.log(`✅ Successfully deleted file from R2: ${Key}`);
   } catch (error) {
-    console.error("S3 deletion error:", error);
+    console.error("❌ R2 deletion error:", error);
     throw error;
   }
 };
 
 export const getFileUrl = (filename) => {
   if (!filename) return null;
-  // Check if we have a CDN URL configured, otherwise use the direct bucket URL
-  if (process.env.SPACES_CDN_URL) {
-    return `${process.env.SPACES_CDN_URL}/${filename}`;
+
+  // Use the R2 public URL from environment
+  if (PUBLIC_URL) {
+    return `${PUBLIC_URL}/${filename}`;
   }
-  return `https://${process.env.SPACES_BUCKET}.${process.env.SPACES_REGION}.digitaloceanspaces.com/${filename}`;
+
+  // Fallback
+  return `https://${process.env.R2_BUCKET_NAME || 'pub-67f953912205445f932ab892164f22e5'}.r2.dev/${filename}`;
 };

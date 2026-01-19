@@ -2,80 +2,52 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, Award } from "lucide-react";
+import Image from "next/image";
+import { fetchApi, formatCurrency } from "@/lib/utils";
+import { getProductImageUrl as getImageUrl } from "@/lib/imageUrl";
 import { Button } from "@/components/ui/button";
-import { fetchApi } from "@/lib/utils";
-import { ProductCard } from "@/components/products/ProductCard";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselPrevious,
-  CarouselNext,
-} from "@/components/ui/carousel";
+import { ShoppingCart, Star, ArrowRight, Eye, Flame } from "lucide-react";
+import { useAddVariantToCart } from "@/lib/cart-utils";
+import { toast } from "sonner";
 
-// Skeleton loader
-const ProductSkeleton = () => (
-  <div className="bg-white rounded-xl overflow-hidden animate-pulse border border-gray-100">
-    <div className="h-48 w-full bg-gradient-to-br from-gray-100 to-gray-200"></div>
-    <div className="p-4">
-      <div className="h-3 w-16 bg-gray-200 rounded-full mx-auto mb-2"></div>
-      <div className="h-4 w-full bg-gray-100 rounded mb-2"></div>
-      <div className="h-4 w-3/4 mx-auto bg-gray-100 rounded mb-3"></div>
-      <div className="h-6 w-20 bg-gray-200 rounded-full mx-auto"></div>
-    </div>
-  </div>
-);
-
-export const BestSellers = () => {
+export function BestSellers() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [api, setApi] = useState(null);
+  const { addVariantToCart } = useAddVariantToCart();
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        setLoading(true);
-        // Try bestseller type first
-        let response = await fetchApi("/public/products/type/bestseller?limit=12");
-        
-        if (!response?.data?.products?.length) {
-          // Fallback to featured products
-          response = await fetchApi("/public/products?featured=true&limit=12");
-        }
-        
-        setProducts(response?.data?.products || []);
-      } catch (err) {
-        console.error("Error fetching bestsellers:", err);
-        setError(err.message);
+        const response = await fetchApi("/public/products?bestseller=true&limit=8");
+        setProducts(response.data.products || []);
+      } catch (error) {
+        console.error("Error fetching best sellers:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchProducts();
   }, []);
 
-  if (error) {
-    return null;
-  }
+
+
+  const handleAddToCart = async (product) => {
+    if (product.variants?.length > 0) {
+      const variant = product.variants[0];
+      const result = await addVariantToCart(variant, 1, product.name);
+      if (result.success) {
+        toast.success("Added to cart!");
+      }
+    }
+  };
 
   if (loading) {
     return (
-      <section className="py-10 md:py-14 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary text-sm font-medium mb-3">
-              <Award className="w-4 h-4" />
-              Most Popular
-            </div>
-            <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">Best Sellers</h2>
-            <p className="text-gray-600 max-w-xl mx-auto text-sm">Top-rated products loved by professionals</p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {[...Array(6)].map((_, index) => (
-              <ProductSkeleton key={index} />
+      <section className="section-padding bg-gradient-section">
+        <div className="section-container">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="bg-gray-200 rounded-2xl h-80 animate-pulse" />
             ))}
           </div>
         </div>
@@ -83,66 +55,98 @@ export const BestSellers = () => {
     );
   }
 
-  if (products.length === 0) {
-    return null;
-  }
+  if (!products.length) return null;
 
   return (
-    <section className="py-10 md:py-14 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4">
+    <section className="section-padding bg-gradient-section">
+      <div className="section-container">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary text-sm font-medium mb-3">
-            <Award className="w-4 h-4" />
-            Most Popular
-          </div>
-          <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">Best Sellers</h2>
-          <p className="text-gray-600 max-w-xl mx-auto text-sm">Top-rated products loved by professionals</p>
+        <div className="section-header">
+          <span className="section-badge">
+            <Flame className="w-4 h-4" />
+            Best Sellers
+          </span>
+          <h2 className="section-title">Top Selling Products</h2>
+          <p className="section-subtitle">Most loved products by our customers</p>
         </div>
 
-        {/* Products Carousel */}
-        <div className="relative">
-          <Carousel
-            setApi={setApi}
-            opts={{
-              align: "start",
-              loop: true,
-            }}
-            className="w-full"
-          >
-            <CarouselContent className="-ml-4">
-              {products.map((product, index) => (
-                <CarouselItem
-                  key={product.id || product.slug || index}
-                  className="pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5 py-4"
-                >
-                  <ProductCard product={product} />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
+        {/* Products Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {products.map((product, index) => (
+            <div key={product.id} className="product-card">
+              {/* Image */}
+              <div className="product-image">
+                <Link href={`/products/${product.slug}`}>
+                  <Image
+                    src={getImageUrl(product)}
+                    alt={product.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                  />
+                </Link>
 
-            {/* Navigation Controls */}
-            <CarouselPrevious className="absolute -left-2 md:left-2 top-1/2 -translate-y-1/2 h-10 w-10 bg-white hover:bg-white hover:text-primary border-gray-200 text-gray-700 shadow-lg z-10" />
-            <CarouselNext className="absolute -right-2 md:right-2 top-1/2 -translate-y-1/2 h-10 w-10 bg-white hover:bg-white hover:text-primary border-gray-200 text-gray-700 shadow-lg z-10" />
-          </Carousel>
+                {/* Rank Badge */}
+                <span className="absolute top-3 left-3 w-8 h-8 rounded-full bg-[#2D2D2D] text-white text-sm font-bold flex items-center justify-center shadow-lg">
+                  #{index + 1}
+                </span>
+
+                {/* Quick Actions */}
+                <div className="product-actions">
+                  <button 
+                    onClick={() => handleAddToCart(product)}
+                    className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-all"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                  </button>
+                  <Link 
+                    href={`/products/${product.slug}`}
+                    className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-all"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-4">
+                <Link href={`/products/${product.slug}`}>
+                  <h3 className="font-semibold text-gray-900 text-sm md:text-base mb-2 line-clamp-2 hover:text-primary transition-colors">
+                    {product.name}
+                  </h3>
+                </Link>
+
+                {/* Rating */}
+                {product.avgRating > 0 && (
+                  <div className="flex items-center gap-1 mb-2">
+                    <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                    <span className="text-xs text-gray-500">{product.avgRating.toFixed(1)}</span>
+                  </div>
+                )}
+
+                {/* Price */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="product-price">{formatCurrency(product.basePrice)}</span>
+                  {product.hasSale && product.regularPrice > product.basePrice && (
+                    <span className="product-price-old">{formatCurrency(product.regularPrice)}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* View All Button */}
-        <div className="text-center mt-6">
-          <Link href="/products?productType=bestseller">
-            <Button
-              variant="outline"
-              size="lg"
-              className="font-medium border-primary text-primary hover:bg-primary hover:text-white group rounded-full px-8"
-            >
-              View All Best Sellers
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+        {/* View All */}
+        <div className="text-center mt-10">
+          <Link href="/products?sort=popular">
+            <Button size="lg" variant="outline" className="btn-outline h-12 px-8 gap-2">
+              View All Best Sellers <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
         </div>
       </div>
     </section>
   );
-};
+}
 
 export default BestSellers;

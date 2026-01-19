@@ -4,7 +4,15 @@ const nextConfig = {
         remotePatterns: [
             {
                 protocol: "https",
-                hostname: "desirediv-storage.blr1.digitaloceanspaces.com",
+                hostname: "**.r2.dev",
+            },
+            {
+                protocol: "https",
+                hostname: "**.digitaloceanspaces.com",
+            },
+            {
+                protocol: "https",
+                hostname: "**.cloudflare.com",
             }
         ]
     }

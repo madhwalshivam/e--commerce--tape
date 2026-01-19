@@ -9,12 +9,9 @@ import { useCart } from "@/lib/cart-context";
 import { formatCurrency } from "@/lib/utils";
 import { ShoppingCart, Plus, Minus, Star, X } from "lucide-react";
 import { toast } from "sonner";
+import { getImageUrl } from "@/lib/imageUrl";
 
-const getImageUrl = (image) => {
-  if (!image) return "/placeholder.jpg";
-  if (image.startsWith("http")) return image;
-  return `https://desirediv-storage.blr1.digitaloceanspaces.com/${image}`;
-};
+
 
 export default function ProductQuickView({ product, open, onOpenChange }) {
   const { addToCart, loading } = useCart();

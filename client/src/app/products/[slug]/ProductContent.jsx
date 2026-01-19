@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import ReviewSection from "./ReviewSection";
 import { useAddVariantToCart } from "@/lib/cart-utils";
 import { ProductCard } from "@/components/products/ProductCard";
+import { getImageUrl } from "@/lib/imageUrl";
 
 export default function ProductContent({ slug }) {
   const [product, setProduct] = useState(null);
@@ -300,12 +301,7 @@ export default function ProductContent({ slug }) {
     }
   };
 
-  // Get image URL helper
-  const getImageUrl = (image) => {
-    if (!image) return "/images/product-placeholder.jpg";
-    if (image.startsWith("http")) return image;
-    return `https://desirediv-storage.blr1.cdn.digitaloceanspaces.com/${image}`;
-  };
+
 
   // Render product images
   const renderImages = () => {

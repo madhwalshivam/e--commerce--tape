@@ -3,29 +3,41 @@ import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
 import { BestSellers } from "@/components/sections/BestSellers";
 import { TrendingProducts } from "@/components/sections/TrendingProducts";
 import { NewArrivals } from "@/components/sections/NewArrivals";
-import { WhyBuySection } from "@/components/sections/WhyBuySection";
-import { UseCaseShopping } from "@/components/sections/UseCaseShopping";
 import { TrustSection } from "@/components/sections/TrustSection";
-import { SocialMediaSection } from "@/components/sections/SocialMediaSection";
 import CategoriesCarousel from "@/components/sections/CategoriesCarousel";
 import HeroSection from "@/components/sections/HeroSection";
+import { CustomerReviews } from "@/components/sections/CustomerReviews";
 import { FlashSaleSection } from "@/components/sections/FlashSaleSection";
 
 export default function Home() {
   return (
     <>
       <main>
-        <CategoriesCarousel />
+        {/* Hero Section with prominent CTA */}
         <HeroSection />
-        <ShopByCategory />
-        <FeaturedProducts />
+
+        {/* Categories Carousel - Quick navigation */}
+        <CategoriesCarousel />
+
+        {/* Flash Sale - If active */}
         <FlashSaleSection />
+
+        {/* Shop By Category - Visual grid */}
+        <ShopByCategory />
+
+        {/* Featured Products - Hero products */}
+        <FeaturedProducts />
+
+        {/* Best Sellers - Popular items */}
         <BestSellers />
-        <TrendingProducts />
+
+        {/* New Arrivals - Latest products */}
         <NewArrivals />
-        <WhyBuySection />
-        <UseCaseShopping />
-        <SocialMediaSection />
+
+        {/* Customer Reviews - Social proof */}
+        <CustomerReviews />
+
+        {/* Trust Section - Build confidence */}
         <TrustSection />
       </main>
     </>

@@ -2,7 +2,7 @@
 import multer from "multer";
 import sharp from "sharp";
 import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-import s3client from "../utils/s3client.js";
+import s3client, { BUCKET_NAME, PUBLIC_URL, UPLOAD_FOLDER } from "../utils/s3client.js";
 
 // Set up multer storage
 const storage = multer.memoryStorage();
@@ -32,9 +32,8 @@ export const processAndUploadImage = async (file, subfolder = "images") => {
       .replace(/[^a-z0-9.]/g, "-");
     const fileExtension = originalname.split(".").pop().toLowerCase();
 
-    // Use UPLOAD_FOLDER from environment variables for consistency
-    const uploadFolder = process.env.UPLOAD_FOLDER || "ecom-uploads";
-    const filename = `${uploadFolder}/${subfolder}/${timestamp}-${sanitizedName}`;
+    // Use UPLOAD_FOLDER from s3client for consistency
+    const filename = `${UPLOAD_FOLDER}/${subfolder}/${timestamp}-${sanitizedName}`;
 
     console.log(`🔧 Target filename: ${filename}`);
 
@@ -48,33 +47,30 @@ export const processAndUploadImage = async (file, subfolder = "images") => {
       `🔧 Sharp processing complete. Processed size: ${processedBuffer.length} bytes`
     );
 
-    // Upload to S3 with proper content type
-    console.log(`🔧 Starting S3 upload...`);
+    // Upload to R2 with proper content type
+    console.log(`🔧 Starting R2 upload...`);
     const putCommand = new PutObjectCommand({
-      Bucket: process.env.SPACES_BUCKET,
+      Bucket: BUCKET_NAME,
       Key: filename,
       Body: processedBuffer,
-      ACL: "public-read",
-      ContentType: `image/${
-        fileExtension === "png"
-          ? "png"
-          : fileExtension === "gif"
+      ContentType: `image/${fileExtension === "png"
+        ? "png"
+        : fileExtension === "gif"
           ? "gif"
           : "jpeg"
-      }`,
+        }`,
     });
 
     await s3client.send(putCommand);
 
-    console.log(`✅ Successfully uploaded image to S3: ${filename}`);
+    console.log(`✅ Successfully uploaded image to R2: ${filename}`);
     return filename;
   } catch (error) {
     console.error("❌ Image processing/upload failed:", error);
     console.error("❌ Error details:", {
       message: error.message,
       stack: error.stack,
-      bucketName: process.env.SPACES_BUCKET,
-      endpoint: process.env.SPACES_ENDPOINT,
+      bucketName: BUCKET_NAME,
     });
     throw error;
   }
@@ -84,9 +80,7 @@ export const processAndUploadImage = async (file, subfolder = "images") => {
 export const uploadPDF = async (file) => {
   const { originalname, buffer, mimetype } = file;
 
-  // Use UPLOAD_FOLDER from environment variables
-  const uploadFolder = process.env.UPLOAD_FOLDER || "ecom-uploads";
-  const filename = `${uploadFolder}/pdfs/${Date.now()}-${originalname
+  const filename = `${UPLOAD_FOLDER}/pdfs/${Date.now()}-${originalname
     .toLowerCase()
     .split(" ")
     .join("-")}`;
@@ -94,17 +88,17 @@ export const uploadPDF = async (file) => {
   try {
     await s3client.send(
       new PutObjectCommand({
-        Bucket: process.env.SPACES_BUCKET,
+        Bucket: BUCKET_NAME,
         Key: filename,
         Body: buffer,
-        ACL: "public-read",
         ContentType: mimetype || "application/pdf",
       })
     );
 
+    console.log(`✅ Successfully uploaded PDF to R2: ${filename}`);
     return filename;
   } catch (error) {
-    console.error("PDF upload failed:", error);
+    console.error("❌ PDF upload failed:", error);
     throw error;
   }
 };
@@ -113,9 +107,7 @@ export const uploadPDF = async (file) => {
 export const uploadAudio = async (file) => {
   const { originalname, buffer, mimetype } = file;
 
-  // Use UPLOAD_FOLDER from environment variables
-  const uploadFolder = process.env.UPLOAD_FOLDER || "ecom-uploads";
-  const filename = `${uploadFolder}/audio/${Date.now()}-${originalname
+  const filename = `${UPLOAD_FOLDER}/audio/${Date.now()}-${originalname
     .toLowerCase()
     .split(" ")
     .join("-")}`;
@@ -123,17 +115,17 @@ export const uploadAudio = async (file) => {
   try {
     await s3client.send(
       new PutObjectCommand({
-        Bucket: process.env.SPACES_BUCKET,
+        Bucket: BUCKET_NAME,
         Key: filename,
         Body: buffer,
-        ACL: "public-read",
         ContentType: mimetype || "audio/mpeg",
       })
     );
 
+    console.log(`✅ Successfully uploaded audio to R2: ${filename}`);
     return filename;
   } catch (error) {
-    console.error("Audio upload failed:", error);
+    console.error("❌ Audio upload failed:", error);
     throw error;
   }
 };
@@ -168,14 +160,17 @@ export const processFiles = async (req, res, next) => {
   }
 };
 
-// Get file URL from filename
+// Get file URL from filename - Using R2 public URL
 export const getFileUrl = (filename) => {
   if (!filename) return null;
-  // Use CDN URL for better performance
-  return `https://desirediv-storage.blr1.cdn.digitaloceanspaces.com/${filename}`;
+  // Use R2 public URL
+  if (PUBLIC_URL) {
+    return `${PUBLIC_URL}/${filename}`;
+  }
+  return `${process.env.R2_PUBLIC_URL}/${filename}`;
 };
 
-// Delete file from S3/DigitalOcean Spaces
+// Delete file from Cloudflare R2
 export const deleteFile = async (fileUrl) => {
   try {
     if (!fileUrl) return;
@@ -192,14 +187,14 @@ export const deleteFile = async (fileUrl) => {
 
     await s3client.send(
       new DeleteObjectCommand({
-        Bucket: process.env.SPACES_BUCKET,
+        Bucket: BUCKET_NAME,
         Key,
       })
     );
 
-    console.log(`File deleted: ${Key}`);
+    console.log(`✅ File deleted from R2: ${Key}`);
   } catch (error) {
-    console.error("File deletion error:", error);
+    console.error("❌ File deletion error:", error);
     throw error;
   }
 };

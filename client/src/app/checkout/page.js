@@ -24,13 +24,9 @@ import { toast } from "sonner";
 import Link from "next/link";
 import AddressForm from "@/components/AddressForm";
 import Image from "next/image";
+import { getImageUrl } from "@/lib/imageUrl";
 
-// Helper function to format image URLs correctly
-const getImageUrl = (image) => {
-    if (!image) return "/placeholder.jpg";
-    if (image.startsWith("http")) return image;
-    return `https://desirediv-storage.blr1.digitaloceanspaces.com/${image}`;
-};
+
 
 export default function CheckoutPage() {
     const { isAuthenticated, user } = useAuth();

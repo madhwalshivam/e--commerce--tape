@@ -5,16 +5,16 @@ import { CartProvider } from "@/lib/cart-context";
 import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata = {
-  title: "DJ-Challenger | Professional P.A Systems Manufacturer",
-  description: "Leading manufacturer, exporter & importer of professional P.A systems, DJ speakers, amplifiers, driver units, and audio equipment. Trusted by professionals worldwide.",
-  keywords: "PA system, DJ speakers, amplifiers, driver units, megaphones, professional audio, sound system, India manufacturer",
-  authors: [{ name: "DJ-Challenger" }],
+  title: "DfixKart | Premium Quality Products - Shop Online",
+  description: "Discover premium quality products at DfixKart. Fast delivery, secure payments, and 100% genuine products. Your trusted online shopping destination.",
+  keywords: "DfixKart, online shopping, premium products, quality products, fast delivery, secure payment, India",
+  authors: [{ name: "DfixKart" }],
   openGraph: {
-    title: "DJ-Challenger | Professional P.A Systems Manufacturer",
-    description: "Leading manufacturer, exporter & importer of professional P.A systems. DJ speakers, amplifiers, driver units and more.",
+    title: "DfixKart | Premium Quality Products - Shop Online",
+    description: "Discover premium quality products at DfixKart. Fast delivery, secure payments, and 100% genuine products.",
     type: "website",
     locale: "en_IN",
-    siteName: "DJ-Challenger",
+    siteName: "DfixKart",
   },
 };
 

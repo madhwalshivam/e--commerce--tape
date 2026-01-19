@@ -9,19 +9,9 @@ import { Button } from "@/components/ui/button";
 import { DynamicIcon } from "@/components/dynamic-icon";
 import { fetchApi, formatCurrency, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
+import { getImageUrl } from "@/lib/imageUrl";
 
-const getImageUrl = (image) => {
-    if (!image) return "/placeholder.jpg";
-    if (typeof image === "string") {
-        if (image.startsWith("http")) return image;
-        return `https://desirediv-storage.blr1.digitaloceanspaces.com/${image}`;
-    }
-    if (image.url) {
-        if (image.url.startsWith("http")) return image.url;
-        return `https://desirediv-storage.blr1.digitaloceanspaces.com/${image.url}`;
-    }
-    return "/placeholder.jpg";
-};
+
 
 export default function OrderDetailPage() {
     const { isAuthenticated, isLoading: authLoading } = useAuth();

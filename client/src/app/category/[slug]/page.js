@@ -7,12 +7,9 @@ import Image from "next/image";
 import { fetchApi } from "@/lib/utils";
 import { AlertCircle, ChevronDown, ChevronLeft, Grid, List, Volume2 } from "lucide-react";
 import { ProductCard } from "@/components/products/ProductCard";
+import { getImageUrl } from "@/lib/imageUrl";
 
-const getImageUrl = (image) => {
-    if (!image) return "/placeholder.jpg";
-    if (image.startsWith("http")) return image;
-    return `https://desirediv-storage.blr1.digitaloceanspaces.com/${image}`;
-};
+
 
 // Product Skeleton
 function ProductCardSkeleton() {

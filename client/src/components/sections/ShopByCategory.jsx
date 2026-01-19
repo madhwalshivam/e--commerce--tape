@@ -1,120 +1,103 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { fetchApi } from "@/lib/utils";
+import { getImageUrl } from "@/lib/imageUrl";
+import { ArrowRight, Grid3X3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-const categories = [
-  {
-    name: "DJ Speakers",
-    slug: "dj-speakers",
-    description: "Professional sound systems",
-    image: "/dj-challenger.jpg",
-    products: "25+ Products"
-  },
-  {
-    name: "PD Series",
-    slug: "pd-series",
-    description: "Power-packed performance",
-    image: "/hero-slide-1.png",
-    products: "15+ Products"
-  },
-  {
-    name: "PA Series",
-    slug: "pa-series",
-    description: "Public address systems",
-    image: "/hero-slide-2.png",
-    products: "20+ Products"
-  },
-  {
-    name: "Amplifiers",
-    slug: "amplifiers",
-    description: "High-power amplification",
-    image: "/hero-slide-3.png",
-    products: "30+ Products"
-  },
-  {
-    name: "NEO Series",
-    slug: "neo-series",
-    description: "Next-gen technology",
-    image: "/dj-challenger.jpg",
-    products: "12+ Products"
-  },
-  {
-    name: "Trolley Speakers",
-    slug: "trolley-speakers",
-    description: "Portable solutions",
-    image:  "/hero-slide-1.png",
-    products: "18+ Products"
+export function ShopByCategory() {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetchApi("/public/categories");
+        setCategories(response.data.categories || []);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+
+
+  if (loading) {
+    return (
+      <section className="section-padding bg-gradient-section">
+        <div className="section-container">
+          <div className="section-header">
+            <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mx-auto mb-4" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="aspect-square rounded-2xl bg-gray-200 animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
   }
-];
 
-export const ShopByCategory = () => {
+  if (!categories.length) return null;
+
   return (
-    <section className="section-padding bg-white">
+    <section className="section-padding bg-gradient-section">
       <div className="section-container">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-          <div>
-            <p className="text-sm font-medium text-primary uppercase tracking-wide mb-2">
-              Shop by Category
-            </p>
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground">
-              Find Your Sound
-            </h2>
-          </div>
-          <Link 
-            href="/products" 
-            className="inline-flex items-center gap-2 text-foreground font-medium hover:text-primary transition-colors group"
-          >
-            View All Products
-            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
+        <div className="section-header">
+          <span className="section-badge">
+            <Grid3X3 className="w-4 h-4" />
+            Categories
+          </span>
+          <h2 className="section-title">Shop by Category</h2>
+          <p className="section-subtitle">Browse our wide range of product categories</p>
         </div>
 
-        {/* Category Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {categories.map((category, index) => (
-            <Link
-              key={category.slug}
-              href={`/products?category=${category.slug}`}
-              className={`group relative overflow-hidden rounded-2xl bg-muted ${
-                index === 0 ? 'col-span-2 lg:col-span-1 aspect-[2/1] lg:aspect-square' : 'aspect-square'
-              }`}
+        {/* Categories Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {categories.slice(0, 8).map((category, index) => (
+            <Link 
+              key={category.id} 
+              href={`/category/${category.slug}`}
+              className="category-card group"
             >
-              {/* Background Image */}
               <Image
-                src={category.image}
+                src={getImageUrl(category.image)}
                 alt={category.name}
                 fill
-                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 33vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
+                className="object-cover"
+                sizes="(max-width: 768px) 50vw, 25vw"
               />
-              
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-              
-              {/* Content */}
-              <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end">
-                <p className="text-white/70 text-sm font-medium mb-1">
-                  {category.products}
+              <div className="category-content">
+                <h3 className="font-semibold text-lg mb-1">{category.name}</h3>
+                <p className="text-white/70 text-sm flex items-center gap-1">
+                  Explore <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                 </p>
-                <h3 className="font-display text-xl md:text-2xl font-bold text-white mb-1">
-                  {category.name}
-                </h3>
-                <p className="text-white/80 text-sm hidden md:block">
-                  {category.description}
-                </p>
-                
-                {/* Arrow */}
-                <div className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ArrowRight className="h-5 w-5 text-white" />
-                </div>
               </div>
             </Link>
           ))}
         </div>
+
+        {/* View All */}
+        {categories.length > 8 && (
+          <div className="text-center mt-10">
+            <Link href="/categories">
+              <Button size="lg" variant="outline" className="btn-outline h-12 px-8 gap-2">
+                View All Categories <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );
-};
+}
+
+export default ShopByCategory;
