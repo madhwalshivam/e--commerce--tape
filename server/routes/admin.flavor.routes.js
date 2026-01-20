@@ -132,7 +132,7 @@ router.post("/flavors", isAdmin, upload.single("image"), async (req, res) => {
 
       await s3client.send(
         new PutObjectCommand({
-          Bucket: process.env.SPACES_BUCKET,
+          Bucket: process.env.R2_BUCKET_NAME,
           Key: imageKey,
           Body: req.file.buffer,
           ContentType: req.file.mimetype,
@@ -233,7 +233,7 @@ router.patch(
 
         await s3client.send(
           new PutObjectCommand({
-            Bucket: process.env.SPACES_BUCKET,
+            Bucket: process.env.R2_BUCKET_NAME,
             Key: imageKey,
             Body: req.file.buffer,
             ContentType: req.file.mimetype,

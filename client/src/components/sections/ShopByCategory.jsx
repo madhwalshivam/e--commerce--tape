@@ -76,8 +76,8 @@ export function ShopByCategory() {
                 sizes="(max-width: 768px) 50vw, 25vw"
               />
               <div className="category-content">
-                <h3 className="font-semibold text-lg mb-1">{category.name}</h3>
-                <p className="text-white/70 text-sm flex items-center gap-1">
+                <h3 className="font-semibold text-sm md:text-lg mb-1">{category.name}</h3>
+                <p className="text-white/70 text-xs md:text-sm flex items-center gap-1">
                   Explore <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                 </p>
               </div>
