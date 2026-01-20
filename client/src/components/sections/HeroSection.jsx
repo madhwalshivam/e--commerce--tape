@@ -33,6 +33,7 @@ export default function HeroSection() {
   const [current, setCurrent] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [isApiBanner, setIsApiBanner] = useState(false); // Track if using API banners
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -49,6 +50,7 @@ export default function HeroSection() {
             cta: "Shop Now"
           }));
           setSlides(apiSlides);
+          setIsApiBanner(true); // API banners loaded successfully
         }
       } catch (err) {
         console.error("Banner fetch error:", err);
@@ -75,14 +77,97 @@ export default function HeroSection() {
 
   if (loading) {
     return (
-      <section className="h-[500px] md:h-[600px]  flex items-center justify-center bg-gray-100">
+      <section className="h-[500px] md:h-[600px] flex items-center justify-center bg-gray-100">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </section>
     );
   }
 
+  // API Banner Layout - Just show the image without overlay
+  if (isApiBanner) {
+    return (
+      <section className="relative w-full overflow-hidden bg-white">
+        {/* Slides */}
+        {slides.map((slide, index) => (
+          <div
+            key={index}
+            className={`relative w-full transition-opacity duration-700 ${
+              index === current ? "opacity-100 block" : "opacity-0 hidden"
+            }`}
+          >
+            {/* Desktop Banner Image */}
+            <div className="hidden md:block relative w-full">
+              <Image
+                src={slide.desktopImage}
+                alt={slide.headline || "Banner"}
+                width={1920}
+                height={500}
+                className="w-full h-auto"
+                priority={index === 0}
+                sizes="100vw"
+                style={{ objectFit: 'cover', objectPosition: 'center' }}
+              />
+            </div>
+            
+            {/* Mobile Banner Image */}
+            <div className="block md:hidden relative w-full">
+              <Image
+                src={slide.mobileImage}
+                alt={slide.headline || "Banner"}
+                width={768}
+                height={400}
+                className="w-full h-auto"
+                priority={index === 0}
+                sizes="100vw"
+                style={{ objectFit: 'cover', objectPosition: 'center' }}
+              />
+            </div>
+          </div>
+        ))}
+
+        {/* Navigation Arrows */}
+        {slides.length > 1 && (
+          <>
+            <button 
+              onClick={prevSlide}
+              onMouseEnter={() => setIsAutoPlaying(false)}
+              onMouseLeave={() => setIsAutoPlaying(true)}
+              className="hidden md:flex absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-black/20 items-center justify-center text-white hover:bg-primary hover:border-primary transition-all"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={nextSlide}
+              onMouseEnter={() => setIsAutoPlaying(false)}
+              onMouseLeave={() => setIsAutoPlaying(true)}
+              className="hidden md:flex absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-black/20 items-center justify-center text-white hover:bg-primary hover:border-primary transition-all"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </>
+        )}
+
+        {/* Slide Indicators */}
+        {slides.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrent(index)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  index === current ? "w-8 bg-primary" : "w-2 bg-gray-400 hover:bg-gray-600"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  // Fallback Layout - Show image with text overlay and buttons
   return (
-    <section className="relative h-[500px] md:h-[600px]  w-full overflow-hidden bg-[#2D2D2D]">
+    <section className="relative h-[500px] md:h-[600px] w-full overflow-hidden bg-[#2D2D2D]">
       {/* Slides */}
       {slides.map((slide, index) => (
         <div
