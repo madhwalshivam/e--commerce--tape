@@ -62,7 +62,7 @@ app.use((req, res, next) => {
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
-  : ['https://api.dfixkart.com', 'https://admin.dfixkart.com'];
+  : ['https://api.dfixkart.com', 'https://admin.dfixkart.com', 'http://localhost:3000', 'https://localhost:3000', 'http://localhost:5173', 'http://localhost:4173'];
 
 app.use(
   cors({

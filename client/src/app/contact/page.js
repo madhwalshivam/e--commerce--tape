@@ -62,20 +62,20 @@ export default function ContactPage() {
             {/* Contact Cards */}
             <section className="section-container -mt-6 pb-12">
                 <div className="grid md:grid-cols-3 gap-4">
-                    <a href="mailto:support@dfixkart.com" className="card-premium p-6 text-center hover:border-primary/20 group">
+                    <a href="mailto:dfixventure@gmail.com" className="card-premium p-6 text-center hover:border-primary/20 group">
                         <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary group-hover:text-white transition-all">
                             <Mail className="h-6 w-6 text-primary group-hover:text-white" />
                         </div>
                         <h3 className="font-bold text-gray-900 mb-1">Email Us</h3>
-                        <p className="text-primary font-medium text-sm">support@dfixkart.com</p>
+                        <p className="text-primary font-medium text-sm">dfixventure@gmail.com</p>
                     </a>
 
-                    <a href="tel:+919650509356" className="card-premium p-6 text-center hover:border-primary/20 group">
+                    <a href="tel:+918851907674" className="card-premium p-6 text-center hover:border-primary/20 group">
                         <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-green-500 transition-all">
                             <Phone className="h-6 w-6 text-green-600 group-hover:text-white" />
                         </div>
                         <h3 className="font-bold text-gray-900 mb-1">Call Us</h3>
-                        <p className="text-green-600 font-medium text-sm">+91 9650509356</p>
+                        <p className="text-green-600 font-medium text-sm">+91 88519 07674</p>
                     </a>
 
                     <div className="card-premium p-6 text-center">
@@ -83,7 +83,7 @@ export default function ContactPage() {
                             <MapPin className="h-6 w-6 text-blue-600" />
                         </div>
                         <h3 className="font-bold text-gray-900 mb-1">Location</h3>
-                        <p className="text-gray-600 text-sm">New Delhi, India</p>
+                        <p className="text-gray-600 text-sm">B 19/1 Double Story, Ramesh Nagar, New Delhi 110015</p>
                     </div>
                 </div>
             </section>

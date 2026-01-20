@@ -206,9 +206,9 @@ const getAboutPageContent = asyncHandler(async (req, res) => {
       new ApiResponsive(200, {
         title: "About Us",
         content:
-          "<h2>Our Story</h2><p>Founded in 2015, djchallenger started with a simple mission: to provide high-quality nutritional supplements that actually work, backed by science and free from harmful additives.</p><p>Our founder, Rahul Sharma, was frustrated with the lack of transparency in the supplements industry. After struggling to find products he could trust, he decided to create his own solution.</p><p>Today, we've grown into one of India's most trusted supplement brands, with a commitment to quality, transparency, and customer satisfaction that remains as strong as ever.</p>",
-        metaTitle: "About Us | djchallenger",
-        metaDescription: "Learn more about djchallenger and our mission.",
+          "<h2>Our Story</h2><p>Founded in 2015, dfixventure started with a simple mission: to provide high-quality nutritional supplements that actually work, backed by science and free from harmful additives.</p><p>Our founder, Rahul Sharma, was frustrated with the lack of transparency in the supplements industry. After struggling to find products he could trust, he decided to create his own solution.</p><p>Today, we've grown into one of India's most trusted supplement brands, with a commitment to quality, transparency, and customer satisfaction that remains as strong as ever.</p>",
+        metaTitle: "About Us | dfixventure",
+        metaDescription: "Learn more about dfixventure and our mission.",
       })
     );
   } catch (error) {
@@ -236,8 +236,8 @@ const getShippingPolicy = asyncHandler(async (req, res) => {
       new ApiResponsive(200, {
         title: "Shipping Policy",
         content:
-          "<h2>Delivery Information</h2><p>At djchallenger, we strive to deliver your orders as quickly and efficiently as possible. We understand that when you order nutritional supplements, you want them right away. That's why we've partnered with reliable courier services to ensure your products reach you in perfect condition.</p><h2>Shipping Fees</h2><ul><li><strong>Free Shipping:</strong> On all orders above ₹999</li><li><strong>Standard Shipping:</strong> ₹99 for orders below ₹999</li><li><strong>Express Shipping:</strong> ₹199 (delivery within 24-48 hours in select metro cities)</li></ul>",
-        metaTitle: "Shipping Policy | djchallenger",
+          "<h2>Delivery Information</h2><p>At dfixventure, we strive to deliver your orders as quickly and efficiently as possible. We understand that when you order nutritional supplements, you want them right away. That's why we've partnered with reliable courier services to ensure your products reach you in perfect condition.</p><h2>Shipping Fees</h2><ul><li><strong>Free Shipping:</strong> On all orders above ₹999</li><li><strong>Standard Shipping:</strong> ₹99 for orders below ₹999</li><li><strong>Express Shipping:</strong> ₹199 (delivery within 24-48 hours in select metro cities)</li></ul>",
+        metaTitle: "Shipping Policy | dfixventure",
         metaDescription: "Our shipping policies and delivery information.",
       })
     );
@@ -262,7 +262,7 @@ const getFaqs = asyncHandler(async (req, res) => {
       return res.status(200).json(
         new ApiResponsive(200, {
           faqs,
-          metaTitle: "Frequently Asked Questions | djchallenger",
+          metaTitle: "Frequently Asked Questions | dfixventure",
           metaDescription:
             "Find answers to common questions about our products and services.",
         })
@@ -301,7 +301,7 @@ const getFaqs = asyncHandler(async (req, res) => {
             isPublished: true,
           },
         ],
-        metaTitle: "Frequently Asked Questions | djchallenger",
+        metaTitle: "Frequently Asked Questions | dfixventure",
         metaDescription:
           "Find answers to common questions about our products and services.",
       })
@@ -368,9 +368,9 @@ const getContactInfo = asyncHandler(async (req, res) => {
           lng: 72.8777,
         },
         socialLinks: {
-          facebook: "https://facebook.com/djchallenger",
-          instagram: "https://instagram.com/djchallenger",
-          twitter: "https://twitter.com/djchallenger",
+          facebook: "https://facebook.com/dfixventure",
+          instagram: "https://instagram.com/dfixventure",
+          twitter: "https://twitter.com/dfixventure",
         },
       };
 
@@ -381,18 +381,18 @@ const getContactInfo = asyncHandler(async (req, res) => {
     const contactInfo = {
       address: "89/2 Sector 39, Gurugram, Haryana",
       phone: "+91 8053210008",
-      email: "connect.djchallenger@gmail.com",
+      email: "connect.dfixventure@gmail.com",
       hours: "Monday - Saturday: 10:00 AM - 7:00 PM",
       mapCoordinates: {
         lat: 19.076,
         lng: 72.8777,
       },
       socialLinks: {
-        facebook: "https://facebook.com/djchallenger",
-        instagram: "https://instagram.com/djchallenger",
-        twitter: "https://twitter.com/djchallenger",
+        facebook: "https://facebook.com/dfixventure",
+        instagram: "https://instagram.com/dfixventure",
+        twitter: "https://twitter.com/dfixventure",
       },
-      metaTitle: "Contact Us | djchallenger",
+      metaTitle: "Contact Us | dfixventure",
       metaDescription:
         "Get in touch with our customer support team. We're here to help!",
     };

@@ -42,12 +42,14 @@ export const getProductImageUrl = (product) => {
 };
 
 /**
- * Get category image URL
+ * Get category image URL with tape.svg fallback
  * @param {string} image - Category image path
  * @returns {string} The category image URL
  */
 export const getCategoryImageUrl = (image) => {
-    return getImageUrl(image);
+    const img = image?.url || image;
+    if (!img || typeof img !== 'string') return "/tape.svg";
+    return getImageUrl(img);
 };
 
 export default getImageUrl;

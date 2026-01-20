@@ -9,22 +9,22 @@ import { fetchApi } from "@/lib/utils";
 
 const fallbackSlides = [
   {
-    headline: "Premium Quality",
-    subheadline: "Products You Can Trust",
-    description: "Discover our curated collection of high-quality products with fast delivery and secure payments.",
-    desktopImage: "/hero-1.jpg",
-    mobileImage: "/hero-1.jpg",
+    headline: "Heavy Duty Packing Tapes",
+    subheadline: "Secure Your Shipments",
+    description: "High-adhesion BOPP tapes for e-commerce and industrial packaging. Available in clear, brown, and custom prints.",
+    desktopImage: "/bg-1.jpg",
+    mobileImage: "/bg-1.jpg",
     link: "/products",
-    cta: "Shop Now"
+    cta: "Shop Packing Tapes"
   },
   {
-    headline: "New Arrivals",
-    subheadline: "Fresh Collection 2024",
-    description: "Explore the latest products with exclusive offers and deals.",
-    desktopImage: "/hero-2.jpg",
-    mobileImage: "/hero-2.jpg",
-    link: "/products?sort=newest",
-    cta: "Explore"
+    headline: "Branded Printed Tapes",
+    subheadline: "Promote Your Business",
+    description: "Custom printed tapes with your logo. Enhance brand visibility with every package you ship.",
+    desktopImage: "/bg-2.jpg",
+    mobileImage: "/bg-2.jpg",
+    link: "/products",
+    cta: "Customize Now"
   },
 ];
 
@@ -75,14 +75,14 @@ export default function HeroSection() {
 
   if (loading) {
     return (
-      <section className="h-[500px] md:h-[600px] lg:h-[700px] flex items-center justify-center bg-gray-100">
+      <section className="h-[500px] md:h-[600px]  flex items-center justify-center bg-gray-100">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </section>
     );
   }
 
   return (
-    <section className="relative h-[500px] md:h-[600px] lg:h-[700px] w-full overflow-hidden bg-[#2D2D2D]">
+    <section className="relative h-[500px] md:h-[600px]  w-full overflow-hidden bg-[#2D2D2D]">
       {/* Slides */}
       {slides.map((slide, index) => (
         <div
@@ -144,7 +144,7 @@ export default function HeroSection() {
                 </Button>
               </Link>
               <Link href="/categories">
-                <Button size="lg" variant="outline" className="h-12 md:h-14 px-6 md:px-8 border-2 border-white/30 text-white hover:bg-white hover:text-[#2D2D2D] text-base">
+                <Button size="lg" variant="outline" className="h-12 md:h-14 px-6 md:px-8 border-2 border-white/30 text-black hover:bg-white hover:text-[#2D2D2D] text-base">
                   Browse Categories
                 </Button>
               </Link>

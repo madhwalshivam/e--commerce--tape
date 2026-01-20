@@ -149,7 +149,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
   try {
     await sendEmail({
       email,
-      subject: "Your OTP for Email Verification - djchallenger",
+      subject: "Your OTP for Email Verification - dfixventure",
       html: getEmailOtpTemplate(otpCode, 10),
     });
 
@@ -446,7 +446,7 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
   try {
     await sendEmail({
       email,
-      subject: "Reset Your Password - djchallenger",
+      subject: "Reset Your Password - dfixventure",
       html: getResetTemplate(resetLink),
     });
 
@@ -1451,7 +1451,7 @@ export const requestAccountDeletion = asyncHandler(async (req, res, next) => {
   try {
     await sendEmail({
       email: user.email,
-      subject: "Confirm Account Deletion - djchallenger",
+      subject: "Confirm Account Deletion - dfixventure",
       html: getDeleteTemplate(deletionLink),
     });
 
@@ -1733,7 +1733,7 @@ export const resendVerificationEmail = asyncHandler(async (req, res, next) => {
   try {
     await sendEmail({
       email,
-      subject: "Your OTP for Email Verification - djchallenger",
+      subject: "Your OTP for Email Verification - dfixventure",
       html: getEmailOtpTemplate(otpCode, 10),
     });
 

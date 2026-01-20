@@ -7,7 +7,7 @@
 export const getStoreConfig = () => {
   return {
     // Store Information
-    storeName: process.env.STORE_NAME || "Dj Challenger",
+    storeName: process.env.STORE_NAME || "D fix",
     storeEmail: process.env.STORE_EMAIL || "store@example.com",
     storePhone: process.env.STORE_PHONE || "+1234567890",
     storeAddress:
@@ -20,7 +20,7 @@ export const getStoreConfig = () => {
       "Your trusted source for premium quality products",
 
     // Email Configuration
-    fromName: process.env.FROM_NAME || process.env.STORE_NAME || "Dj Challenger",
+    fromName: process.env.FROM_NAME || process.env.STORE_NAME || "D fix",
     fromEmail:
       process.env.FROM_EMAIL ||
       process.env.STORE_EMAIL ||
@@ -32,7 +32,7 @@ export const getStoreConfig = () => {
     supportEmail:
       process.env.SUPPORT_EMAIL ||
       process.env.STORE_EMAIL ||
-      "DjChallengerIndia@gmail.com",
+      "dfixventure@gmail.com",
 
     // Social Media (optional)
     socialFacebook: process.env.SOCIAL_FACEBOOK || "",

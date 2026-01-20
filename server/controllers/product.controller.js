@@ -210,7 +210,11 @@ export const getAllProducts = asyncHandler(async (req, res) => {
         },
       },
     },
-    orderBy: [{ [sort]: order }],
+    orderBy: [
+      sort === "newest"
+        ? { createdAt: order }
+        : { [sort]: order }
+    ],
     skip: (parseInt(page) - 1) * parseInt(limit),
     take: parseInt(limit),
   });

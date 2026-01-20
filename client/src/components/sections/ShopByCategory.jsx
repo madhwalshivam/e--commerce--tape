@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchApi } from "@/lib/utils";
-import { getImageUrl } from "@/lib/imageUrl";
+import { getCategoryImageUrl, getImageUrl } from "@/lib/imageUrl";
 import { ArrowRight, Grid3X3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -69,7 +69,7 @@ export function ShopByCategory() {
               className="category-card group"
             >
               <Image
-                src={getImageUrl(category.image)}
+                src={getCategoryImageUrl(category.image)}
                 alt={category.name}
                 fill
                 className="object-cover"

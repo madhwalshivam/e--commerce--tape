@@ -102,7 +102,7 @@
     },
     "payment_settings": {
         "title": "Payment Settings",
-        "description": "Configure payment methods for Dj Challenger",
+        "description": "Configure payment methods for D fix",
         "loading": "Loading payment settings...",
         "card_title": "Payment Methods",
         "card_desc": "Enable and configure the payment options available to your customers",
@@ -127,7 +127,7 @@
     },
     "moq_settings": {
         "title": "MOQ Settings",
-        "description": "Configure Minimum Order Quantity (MOQ) globally for Dj Challenger",
+        "description": "Configure Minimum Order Quantity (MOQ) globally for D fix",
         "card_title": "Global MOQ Configuration",
         "card_desc": "When enabled, all products will require a minimum order quantity unless overridden at product or variant level.",
         "enable": "Enable MOQ System",
@@ -155,7 +155,7 @@
     },
     "price_visibility": {
         "title": "Price Visibility Settings",
-        "description": "Control price visibility for guest users on Dj Challenger",
+        "description": "Control price visibility for guest users on D fix",
         "card_title": "Price Visibility Control",
         "hide_guests": "Hide Prices for Guest Users",
         "hide_guests_desc": "When enabled, prices will be hidden for non-logged-in users. Logged-in users can see all prices normally.",
@@ -1084,7 +1084,7 @@
             "state": "State",
             "no_message": "No message provided",
             "approve_title": "Approve Partner",
-            "approve_desc": "This partner will be approved with the demo password \"djchallenger\". Please share this password with the partner after approval.",
+            "approve_desc": "This partner will be approved with the demo password \"dfixventure\". Please share this password with the partner after approval.",
             "demo_password": "Demo Password",
             "demo_hint": "The partner can login with this password and will be prompted to change it.",
             "approving": "Approving...",
@@ -1664,11 +1664,11 @@
     },
     "dashboard": {
         "title": "Dashboard",
-        "subtitle": "Overview of Dj Challenger performance",
+        "subtitle": "Overview of D fix performance",
         "view_orders": "View Orders",
         "quick_actions": {
             "title": "Quick Actions",
-            "description": "Manage Dj Challenger content quickly",
+            "description": "Manage D fix content quickly",
             "product_sections": "Product Sections",
             "product_sections_desc": "Manage homepage sections",
             "banners": "Banners",

@@ -336,6 +336,16 @@ const INDUSTRY_PRESETS = {
       { name: "Color", inputType: "select" },
     ],
   },
+  packingTape: {
+    name: "Packing Tape / BOPP Tape",
+    attributes: [
+      { name: "Pack Size", inputType: "select" },
+      { name: "Width", inputType: "select" },
+      { name: "Length", inputType: "select" },
+      { name: "Color", inputType: "select" },
+      { name: "Print Type", inputType: "select" },
+    ],
+  },
 };
 
 function AttributeForm({

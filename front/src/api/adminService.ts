@@ -695,7 +695,7 @@ export const settings = {
         success: true,
         data: {
           settings: {
-            storeName: "Dj Challenger",
+            storeName: "D fix",
             storeEmail: "store@example.com",
             storePhone: "+1 234 567 8900",
             storeAddress: "123 Store St, City, Country",
@@ -705,8 +705,8 @@ export const settings = {
             shippingFee: 5,
             freeShippingThreshold: 50,
             enableFreeShipping: true,
-            metaTitle: "Dj Challenger - Best Products",
-            metaDescription: "Find the best products at Dj Challenger",
+            metaTitle: "D fix - Best Products",
+            metaDescription: "Find the best products at D fix",
             socialLinks: {
               facebook: "https://facebook.com/yourstore",
               twitter: "https://twitter.com/yourstore",

@@ -116,9 +116,9 @@ export function Navbar() {
                 </span>
               </div>
               <div className="flex items-center gap-4">
-                <a href="tel:+919650509356" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+                <a href="tel:+918851907674" className="flex items-center gap-1.5 hover:text-primary transition-colors">
                   <Phone className="w-3.5 h-3.5" />
-                  +91 9650509356
+                  +91 88519 07674
                 </a>
               </div>
             </div>

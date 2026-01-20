@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { fetchApi } from "@/lib/utils";
 import { AlertCircle, ArrowRight, Grid3X3, Package, Zap, Headphones } from "lucide-react";
-import { getImageUrl } from "@/lib/imageUrl";
+import { getCategoryImageUrl } from "@/lib/imageUrl";
 
 
 
@@ -17,7 +17,7 @@ const CategoryCard = ({ category, index }) => {
                     {/* Image */}
                     <div className="relative h-40 w-full overflow-hidden bg-gray-50 rounded-t-2xl">
                         <Image
-                            src={getImageUrl(category.image)}
+                            src={getCategoryImageUrl(category.image)}
                             alt={category.name}
                             fill
                             className="object-contain p-4 transition-transform duration-500 group-hover:scale-110"

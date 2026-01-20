@@ -13,23 +13,25 @@ export default function Home() {
   return (
     <>
       <main>
+        {/* Categories Carousel - Quick navigation */}
+        <CategoriesCarousel />
         {/* Hero Section with prominent CTA */}
         <HeroSection />
 
-        {/* Categories Carousel - Quick navigation */}
-        <CategoriesCarousel />
 
         {/* Flash Sale - If active */}
         <FlashSaleSection />
 
-        {/* Shop By Category - Visual grid */}
-        <ShopByCategory />
+
 
         {/* Featured Products - Hero products */}
         <FeaturedProducts />
 
         {/* Best Sellers - Popular items */}
         <BestSellers />
+
+        {/* Shop By Category - Visual grid */}
+        <ShopByCategory />
 
         {/* New Arrivals - Latest products */}
         <NewArrivals />

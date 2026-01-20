@@ -18,6 +18,7 @@
     "fix-super-admin": "node -r dotenv/config --experimental-json-modules scripts/fixSuperAdminPermissions.js",
     "setup-s3": "node scripts/setup-s3.js",
     "test-s3": "node utils/s3test.js",
+    "seed-tape-attributes": "node -r dotenv/config --experimental-json-modules scripts/seedTapeAttributes.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

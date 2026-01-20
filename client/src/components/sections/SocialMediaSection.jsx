@@ -5,8 +5,8 @@ import { Instagram, Facebook, Youtube, Play, Heart, Users, ArrowRight } from "lu
 const socialLinks = [
   {
     name: "Instagram",
-    handle: "@official_djchallenger",
-    url: "https://www.instagram.com/official_djchallenger/",
+    handle: "@official_dfixventure",
+    url: "https://www.instagram.com/official_dfixventure/",
     icon: Instagram,
     color: "from-purple-500 via-pink-500 to-orange-400",
     hoverBg: "hover:bg-gradient-to-br hover:from-purple-500 hover:via-pink-500 hover:to-orange-400",
@@ -15,7 +15,7 @@ const socialLinks = [
   },
   {
     name: "Facebook",
-    handle: "DJ Challenger India",
+    handle: "D fix India",
     url: "https://www.facebook.com/share/1DCsKYB5Uy/?mibextid=wwXIfr",
     icon: Facebook,
     color: "from-blue-600 to-blue-500",
@@ -25,8 +25,8 @@ const socialLinks = [
   },
   {
     name: "YouTube",
-    handle: "@djchallengerindia",
-    url: "https://youtube.com/@djchallengerindia?si=ZkkCpU1DEh48NBSe",
+    handle: "@@dfixventure",
+    url: "https://youtube.com/@@dfixventure?si=ZkkCpU1DEh48NBSe",
     icon: Youtube,
     color: "from-red-600 to-red-500",
     hoverBg: "hover:bg-gradient-to-br hover:from-red-600 hover:to-red-500",
