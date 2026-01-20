@@ -26,11 +26,14 @@ export default function CategoriesCarousel() {
 
   if (loading) {
     return (
-      <section className="py-8 bg-white border-b border-gray-100">
+      <section className="py-4 bg-white border-b border-gray-100">
         <div className="section-container">
-          <div className="flex gap-4 overflow-hidden">
+          <div className="flex gap-4 overflow-hidden justify-center">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl bg-gray-100 animate-pulse" />
+              <div key={i} className="flex-shrink-0">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-lg bg-gray-100 animate-pulse" />
+                <div className="h-3 mt-2 w-14 mx-auto bg-gray-100 rounded animate-pulse" />
+              </div>
             ))}
           </div>
         </div>
@@ -41,29 +44,31 @@ export default function CategoriesCarousel() {
   if (!categories.length) return null;
 
   return (
-    <section className="py-5 bg-white border-b border-gray-100 w-full">
+    <section className="py-4 bg-white border-b border-gray-100 w-full">
       <div className="section-container">
-    
         <div className="relative">
-          <div className="flex items-center justify-evenly overflow-x-auto pb-4  gap-4 scrollbar-hide snap-x snap-mandatory">
+          <div className="flex items-start justify-center gap-3 sm:gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-hide">
             {categories.slice(0, 10).map((category) => (
               <Link 
                 key={category.id} 
                 href={`/category/${category.slug}`}
-                className="flex-shrink-0 snap-start group"
+                className="flex-shrink-0 group text-center"
               >
-                <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28  rounded-md overflow-hidden bg-gray-100">
+                {/* Image Container */}
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-gray-100 mx-auto shadow-sm group-hover:shadow-md transition-shadow">
                   <Image
                     src={getCategoryImageUrl(category.image)}
                     alt={category.name}
                     fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-primary/80 transition-all duration-300" />
-                  <div className="absolute inset-0 flex items-end p-3">
-                    <p className="text-white text-xs md:text-sm font-medium md:font-semibold leading-tight">{category.name}</p>
-                  </div>
+                  {/* Subtle overlay on hover only */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-primary/20 transition-all duration-300" />
                 </div>
+                {/* Text Below Image */}
+                <p className="mt-2 text-[10px] sm:text-xs md:text-sm font-medium text-gray-700 group-hover:text-primary transition-colors leading-tight max-w-[70px] sm:max-w-[85px] md:max-w-[100px] mx-auto truncate">
+                  {category.name}
+                </p>
               </Link>
             ))}
           </div>
