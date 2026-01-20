@@ -206,6 +206,17 @@ function RegisterForm() {
     const { register } = useAuth();
     const router = useRouter();
 
+    // Password validation checks
+    const passwordChecks = {
+        minLength: formData.password.length >= 8,
+        hasLetter: /[a-zA-Z]/.test(formData.password),
+        hasNumber: /[0-9]/.test(formData.password),
+        hasSymbol: /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~;']/.test(formData.password),
+    };
+
+    const allPasswordRequirementsMet = Object.values(passwordChecks).every(Boolean);
+    const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0;
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -223,12 +234,12 @@ function RegisterForm() {
             return false;
         }
 
-        if (formData.password.length < 8) {
-            toast.error("Password should be at least 8 characters");
+        if (!allPasswordRequirementsMet) {
+            toast.error("Password doesn't meet all requirements");
             return false;
         }
 
-        if (formData.password !== formData.confirmPassword) {
+        if (!passwordsMatch) {
             toast.error("Passwords do not match");
             return false;
         }
@@ -262,6 +273,16 @@ function RegisterForm() {
             setIsSubmitting(false);
         }
     };
+
+    // Password requirement item component
+    const PasswordRequirement = ({ met, text }) => (
+        <div className={`flex items-center gap-2 text-xs ${met ? 'text-green-600' : 'text-red-500'}`}>
+            <span className={`w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px] ${met ? 'bg-green-500' : 'bg-red-400'}`}>
+                {met ? '✓' : '✗'}
+            </span>
+            <span>{text}</span>
+        </div>
+    );
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -327,7 +348,7 @@ function RegisterForm() {
                         value={formData.password}
                         onChange={handleChange}
                         required
-                        placeholder="Min 8 characters"
+                        placeholder="Create a strong password"
                         className="input-premium pl-11 pr-11"
                     />
                     <button
@@ -338,6 +359,17 @@ function RegisterForm() {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                 </div>
+                
+                {/* Password Requirements Checklist */}
+                {formData.password.length > 0 && (
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
+                        <p className="text-xs font-medium text-gray-600 mb-2">Password Requirements:</p>
+                        <PasswordRequirement met={passwordChecks.minLength} text="At least 8 characters" />
+                        <PasswordRequirement met={passwordChecks.hasLetter} text="At least one letter (a-z, A-Z)" />
+                        <PasswordRequirement met={passwordChecks.hasNumber} text="At least one number (0-9)" />
+                        <PasswordRequirement met={passwordChecks.hasSymbol} text="At least one symbol (!@#$%^&*)" />
+                    </div>
+                )}
             </div>
 
             <div>
@@ -351,12 +383,22 @@ function RegisterForm() {
                         onChange={handleChange}
                         required
                         placeholder="Confirm password"
-                        className="input-premium pl-11"
+                        className={`input-premium pl-11 ${formData.confirmPassword.length > 0 ? (passwordsMatch ? 'border-green-500 focus:ring-green-500' : 'border-red-500 focus:ring-red-500') : ''}`}
                     />
                 </div>
+                {formData.confirmPassword.length > 0 && !passwordsMatch && (
+                    <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
+                )}
+                {formData.confirmPassword.length > 0 && passwordsMatch && (
+                    <p className="text-xs text-green-600 mt-1">Passwords match ✓</p>
+                )}
             </div>
 
-            <Button type="submit" className="w-full btn-primary h-12 text-base gap-2" disabled={isSubmitting}>
+            <Button 
+                type="submit" 
+                className="w-full btn-primary h-12 text-base gap-2" 
+                disabled={isSubmitting || !allPasswordRequirementsMet || !passwordsMatch}
+            >
                 {isSubmitting ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Creating account...</>
                 ) : (
