@@ -47,7 +47,7 @@ export default function CategoriesCarousel() {
     <section className="py-4 bg-white border-b border-gray-100 w-full">
       <div className="section-container">
         <div className="relative">
-          <div className="flex items-start justify-center gap-3 sm:gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex items-start justify-start lg:justify-evenly gap-4 sm:gap-5 md:gap-6 overflow-x-auto pb-2 scrollbar-hide">
             {categories.slice(0, 10).map((category) => (
               <Link 
                 key={category.id} 
