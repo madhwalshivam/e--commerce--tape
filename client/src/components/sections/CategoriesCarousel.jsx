@@ -41,7 +41,7 @@ export default function CategoriesCarousel() {
   if (!categories.length) return null;
 
   return (
-    <section className="py-5 bg-white border-b border-gray-100">
+    <section className="py-5 bg-white border-b border-gray-100 w-full">
       <div className="section-container">
     
         <div className="relative">
@@ -52,7 +52,7 @@ export default function CategoriesCarousel() {
                 href={`/category/${category.slug}`}
                 className="flex-shrink-0 snap-start group"
               >
-                <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28  rounded-2xl overflow-hidden bg-gray-100">
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28  rounded-md overflow-hidden bg-gray-100">
                   <Image
                     src={getCategoryImageUrl(category.image)}
                     alt={category.name}

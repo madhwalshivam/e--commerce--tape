@@ -195,7 +195,7 @@
 /* Category Card */
 @layer components {
   .category-card {
-    @apply relative rounded-2xl overflow-hidden bg-gray-100 aspect-square cursor-pointer;
+    @apply relative rounded-md overflow-hidden bg-gray-100 aspect-square cursor-pointer;
   }
   
   .category-card::after {
