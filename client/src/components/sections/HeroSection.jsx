@@ -100,8 +100,8 @@ export default function HeroSection() {
               <Image
                 src={slide.desktopImage}
                 alt={slide.headline || "Banner"}
-                width={1920}
-                height={500}
+                width={2000}
+                height={1000}
                 className="w-full h-auto"
                 priority={index === 0}
                 sizes="100vw"
@@ -114,8 +114,8 @@ export default function HeroSection() {
               <Image
                 src={slide.mobileImage}
                 alt={slide.headline || "Banner"}
-                width={768}
-                height={400}
+                width={1000}
+                height={1000}
                 className="w-full h-auto"
                 priority={index === 0}
                 sizes="100vw"

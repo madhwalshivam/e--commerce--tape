@@ -38,5 +38,5 @@ export const getFileUrl = (filename) => {
   }
 
   // Fallback
-  return `https://${process.env.R2_BUCKET_NAME || 'pub-67f953912205445f932ab892164f22e5'}.r2.dev/${filename}`;
+  return `${process.env.R2_PUBLIC_URL || 'https://pub-5378641ac9774021be7c65a006461132.r2.dev'}/${filename}`;
 };

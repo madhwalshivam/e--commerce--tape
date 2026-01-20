@@ -1,9 +1,7 @@
 import { ShopByCategory } from "@/components/sections/ShopByCategory";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
 import { BestSellers } from "@/components/sections/BestSellers";
-import { TrendingProducts } from "@/components/sections/TrendingProducts";
 import { NewArrivals } from "@/components/sections/NewArrivals";
-import { TrustSection } from "@/components/sections/TrustSection";
 import CategoriesCarousel from "@/components/sections/CategoriesCarousel";
 import HeroSection from "@/components/sections/HeroSection";
 import { CustomerReviews } from "@/components/sections/CustomerReviews";
@@ -38,9 +36,6 @@ export default function Home() {
 
         {/* Customer Reviews - Social proof */}
         <CustomerReviews />
-
-        {/* Trust Section - Build confidence */}
-        <TrustSection />
       </main>
     </>
   );
