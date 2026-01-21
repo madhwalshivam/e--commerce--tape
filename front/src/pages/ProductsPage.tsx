@@ -972,6 +972,10 @@ export function ProductForm({
           formData.append("salePrice", String(product.salePrice));
         }
         formData.append("quantity", String(product.quantity || 0));
+        // Add SKU for simple products
+        if (product.sku && product.sku.trim() !== "") {
+          formData.append("sku", product.sku);
+        }
 
         // Add shipping dimensions for simple product
         if (shiprocketEnabled) {
@@ -1385,10 +1389,14 @@ export function ProductForm({
     );
   };
 
+  // Track if user has manually edited the SKU
+  const [skuManuallyEdited, setSkuManuallyEdited] = useState(false);
+
   useEffect(() => {
-    // Auto-generate SKU when not using variants
+    // Auto-generate SKU when not using variants and SKU hasn't been manually edited
     if (
       !hasVariants &&
+      !skuManuallyEdited &&
       product.name &&
       product.price &&
       categories.length > 0 &&
@@ -1420,6 +1428,7 @@ export function ProductForm({
     product.price,
     product.categoryIds,
     categories,
+    skuManuallyEdited,
   ]);
 
   // ... inside ProductForm, after brands state:
@@ -1873,7 +1882,7 @@ export function ProductForm({
                 </>
               )}
 
-              {/* SKU Field - Auto-generated in both cases */}
+              {/* SKU Field - Auto-generated but editable */}
               <div className="grid gap-2">
                 <Label htmlFor="sku">
                   {!hasVariants
@@ -1884,11 +1893,16 @@ export function ProductForm({
                   id="sku"
                   name="sku"
                   value={product.sku}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    setSkuManuallyEdited(true); // Mark as manually edited
+                  }}
                   placeholder={t("products.form.placeholders.sku_auto_hint")}
-                  readOnly
-                  className="bg-muted"
+                  required
                 />
+                <p className="text-xs text-muted-foreground">
+                  SKU is auto-generated but you can edit it if needed
+                </p>
               </div>
 
               {!hasVariants && (

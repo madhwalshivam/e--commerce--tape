@@ -42,9 +42,7 @@ export function BestSellers() {
     if (product.variants?.length > 0) {
       const variant = product.variants[0];
       const result = await addVariantToCart(variant, 1, product.name);
-      if (result.success) {
-        toast.success("Added to cart!");
-      }
+      
     }
   };
 

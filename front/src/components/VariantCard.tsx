@@ -911,15 +911,15 @@ export default function VariantCard({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label htmlFor={`sku-${index}`} className="text-xs">
-                SKU
+                SKU *
               </Label>
               <Input
                 id={`sku-${index}`}
                 value={variant.sku}
                 onChange={(e) => handleInputChange("sku", e.target.value)}
                 className="h-8"
-                readOnly
-                placeholder="Auto-generated"
+                required
+                placeholder="Auto-generated, editable"
               />
             </div>
 

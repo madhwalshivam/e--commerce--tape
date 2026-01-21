@@ -749,8 +749,21 @@ export const createProduct = asyncHandler(async (req, res, next) => {
           quantity: req.body.quantity,
         });
 
-        // Generate default SKU
-        const defaultSku = generateSKU(productInfo, "DEFAULT");
+        // Use admin-provided SKU if available, otherwise generate default
+        let defaultSku = req.body.sku;
+        if (!defaultSku || defaultSku.trim() === "") {
+          defaultSku = generateSKU(productInfo, "DEFAULT");
+        }
+
+        // Check if SKU already exists
+        const existingSku = await prisma.productVariant.findUnique({
+          where: { sku: defaultSku },
+        });
+
+        if (existingSku) {
+          // Generate a new unique SKU
+          defaultSku = generateSKU(productInfo, "DEFAULT", Math.floor(Math.random() * 100));
+        }
 
         // Ensure price, salePrice, and quantity are properly parsed
         const price = req.body.price ? parseFloat(req.body.price) : 0;
@@ -1918,7 +1931,22 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
           `📝 Processing non-variant product update. hasVariants: ${hasVariants}, existing variants: ${product.variants.length}`
         );
         if (product.variants.length === 0) {
-          const defaultSku = `${baseSku}-DEF`;
+          // Use admin-provided SKU if available, otherwise generate default
+          let defaultSku = req.body.sku;
+          if (!defaultSku || defaultSku.trim() === "") {
+            defaultSku = `${baseSku}-DEF`;
+          }
+
+          // Check if SKU already exists
+          const existingSku = await prisma.productVariant.findUnique({
+            where: { sku: defaultSku },
+          });
+
+          if (existingSku) {
+            // Generate a new unique SKU
+            const randomSuffix = Math.floor(Math.random() * 100).toString().padStart(2, "0");
+            defaultSku = `${baseSku}-DEF-${randomSuffix}`;
+          }
 
           // Ensure price, salePrice, and quantity are properly parsed
           // Parse price with validation
@@ -2043,8 +2071,26 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
           // Always update the price and other fields, even if they're not explicitly defined in the request
           // This fixes the issue where price wasn't updating when hasVariants was null
 
-          // Robust parsing for price, salePrice, and quantity
+          // Robust parsing for price, salePrice, quantity and SKU
           const updateData = {};
+
+          // Handle SKU update - use admin-provided SKU if available
+          if (req.body.sku !== undefined && req.body.sku.trim() !== "") {
+            // Check if the new SKU already exists (for a different variant)
+            const existingSku = await prisma.productVariant.findFirst({
+              where: {
+                sku: req.body.sku,
+                id: { not: product.variants[0].id }
+              }
+            });
+
+            if (existingSku) {
+              console.warn(`SKU "${req.body.sku}" already exists, keeping existing SKU`);
+            } else {
+              updateData.sku = req.body.sku;
+              console.log(`Updating SKU to: ${req.body.sku}`);
+            }
+          }
 
           // Parse price with enhanced validation and debugging
           try {
