@@ -17,6 +17,9 @@ export const getAllProducts = asyncHandler(async (req, res) => {
     minPrice,
     maxPrice,
     featured,
+    bestseller,
+    trending,
+    newArrival,
     productType,
     color, // For backward compatibility
     size, // For backward compatibility
@@ -27,9 +30,25 @@ export const getAllProducts = asyncHandler(async (req, res) => {
   const normalizedSearch =
     typeof search === "string" ? search.replace(/\+/g, " ") : "";
 
+  // Build productType conditions based on individual flags
+  const productTypeConditions = [];
+  if (bestseller === "true") productTypeConditions.push("bestseller");
+  if (trending === "true") productTypeConditions.push("trending");
+  // Map newArrival query param to "new" stored value
+  if (newArrival === "true") productTypeConditions.push("new");
+
+  if (productType) {
+    // productType param can be a single string or comma-separated
+    const types = productType.split(",");
+    types.forEach(t => {
+      if (t === "newArrival") productTypeConditions.push("new");
+      else productTypeConditions.push(t);
+    });
+  }
+
   // Build filter conditions
   const whereConditions = {
-    isActive: true,
+    isActive: true, // Only show active products
     // Search in name or description
     ...(normalizedSearch && {
       OR: [
@@ -67,11 +86,16 @@ export const getAllProducts = asyncHandler(async (req, res) => {
       },
     }),
     // Filter by featured
-    ...(featured === "true" && { featured: true }),
-    // Filter by product type
-    ...(productType && {
+    ...(featured === "true" && {
+      OR: [
+        { featured: true },
+        { productType: { array_contains: ["featured"] } }
+      ]
+    }),
+    // Filter by product types (bestseller, trending, new, etc.)
+    ...(productTypeConditions.length > 0 && {
       productType: {
-        array_contains: [productType],
+        array_contains: productTypeConditions,
       },
     }),
     // Filter by price range via variants

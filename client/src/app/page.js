@@ -6,6 +6,7 @@ import CategoriesCarousel from "@/components/sections/CategoriesCarousel";
 import HeroSection from "@/components/sections/HeroSection";
 import { CustomerReviews } from "@/components/sections/CustomerReviews";
 import { FlashSaleSection } from "@/components/sections/FlashSaleSection";
+import { TrendingProducts } from "@/components/sections/TrendingProducts";
 
 export default function Home() {
   return (
@@ -30,6 +31,9 @@ export default function Home() {
 
         {/* Shop By Category - Visual grid */}
         <ShopByCategory />
+
+        {/* Trending Products */}
+        <TrendingProducts />
 
         {/* New Arrivals - Latest products */}
         <NewArrivals />

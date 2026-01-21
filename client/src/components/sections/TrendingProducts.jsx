@@ -37,14 +37,8 @@ export const TrendingProducts = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        // Try trending type first
-        let response = await fetchApi("/public/products/type/trending?limit=12");
-        
-        if (!response?.data?.products?.length) {
-          // Fallback to recent products
-          response = await fetchApi("/public/products?sort=createdAt&order=desc&limit=12");
-        }
-        
+        // Use the unified product query with trending=true
+        const response = await fetchApi("/public/products?trending=true&limit=12");
         setProducts(response?.data?.products || []);
       } catch (err) {
         console.error("Error fetching trending products:", err);
@@ -114,7 +108,7 @@ export const TrendingProducts = () => {
               {products.map((product, index) => (
                 <CarouselItem
                   key={product.id || product.slug || index}
-                  className="pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5 py-4"
+                  className="pl-4 basis-1/2 md:basis-1/3 lg:basis-1/6 py-4"
                 >
                   <ProductCard product={product} />
                 </CarouselItem>
@@ -129,7 +123,7 @@ export const TrendingProducts = () => {
 
         {/* View All Button */}
         <div className="text-center mt-6">
-          <Link href="/products?productType=trending">
+          <Link href="/products?trending=true">
             <Button
               variant="outline"
               size="lg"
