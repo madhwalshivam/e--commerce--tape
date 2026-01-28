@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Star, Minus, Plus, AlertCircle, ShoppingCart, Heart, ChevronRight, CheckCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import ReviewSection from "./ReviewSection";
+// import ReviewSection from "./ReviewSection";
 import { useAddVariantToCart } from "@/lib/cart-utils";
 import { ProductCard } from "@/components/products/ProductCard";
 import { getImageUrl } from "@/lib/imageUrl";
@@ -75,7 +75,7 @@ export default function ProductContent({ slug }) {
 
         if (productData.variants && productData.variants.length > 0) {
           const combinations = productData.variants
-            .filter((v) => v.isActive && (v.stock > 0 || v.quantity > 0))
+            .filter((v) => v.isActive)
             .map((variant) => ({
               attributeValueIds: variant.attributes ? variant.attributes.map((a) => a.attributeValueId) : [],
               variant: variant,
@@ -83,41 +83,23 @@ export default function ProductContent({ slug }) {
 
           setAvailableCombinations(combinations);
 
-          if (productData.attributeOptions && productData.attributeOptions.length > 0) {
-            const defaultSelections = {};
-
-            productData.attributeOptions.forEach((attr) => {
-              if (attr.values && attr.values.length > 0) {
-                defaultSelections[attr.id] = attr.values[0].id;
-              }
-            });
-
-            setSelectedAttributes(defaultSelections);
-
-            const matchingVariant = combinations.find((combo) => {
-              const comboIds = combo.attributeValueIds.sort().join(",");
-              const selectedIds = Object.values(defaultSelections).sort().join(",");
-              return comboIds === selectedIds;
-            });
-
-            if (matchingVariant) {
-              setSelectedVariant(matchingVariant.variant);
-              const moq = matchingVariant.variant.moq || 1;
-              setQuantity(moq);
-              const priceInfo = getEffectivePrice(matchingVariant.variant, moq);
-              setEffectivePriceInfo(priceInfo);
-            } else if (productData.variants.length > 0) {
-              setSelectedVariant(productData.variants[0]);
-              const moq = productData.variants[0].moq || 1;
-              setQuantity(moq);
-              const priceInfo = getEffectivePrice(productData.variants[0], moq);
-              setEffectivePriceInfo(priceInfo);
+          if (productData.variants.length > 0) {
+            // Default to the first active variant
+            const firstVariant = productData.variants[0];
+            setSelectedVariant(firstVariant);
+            
+            // Set initial selected attributes based on this variant
+            const initialAttributes = {};
+            if (firstVariant.attributes) {
+              firstVariant.attributes.forEach(attr => {
+                initialAttributes[attr.attributeId] = attr.attributeValueId;
+              });
             }
-          } else if (productData.variants.length > 0) {
-            setSelectedVariant(productData.variants[0]);
-            const moq = productData.variants[0].moq || 1;
+            setSelectedAttributes(initialAttributes);
+
+            const moq = firstVariant.moq || 1;
             setQuantity(moq);
-            const priceInfo = getEffectivePrice(productData.variants[0], moq);
+            const priceInfo = getEffectivePrice(firstVariant, moq);
             setEffectivePriceInfo(priceInfo);
           }
         }
@@ -154,28 +136,55 @@ export default function ProductContent({ slug }) {
 
   // Handle attribute value change
   const handleAttributeChange = (attributeId, attributeValueId) => {
+    // 1. Try to maintain current selections + new selection
     const newSelections = { ...selectedAttributes, [attributeId]: attributeValueId };
-    setSelectedAttributes(newSelections);
-
-    const selectedValueIds = Object.values(newSelections).sort();
-    const matchingVariant = availableCombinations.find((combo) => {
-      const comboIds = combo.attributeValueIds.sort();
-      return comboIds.length === selectedValueIds.length && comboIds.every((id, idx) => id === selectedValueIds[idx]);
+    
+    // Check if this exact combination exists
+    const exactMatch = availableCombinations.find((combo) => {
+      const comboIds = combo.attributeValueIds;
+      const selectedIds = Object.values(newSelections);
+      return selectedIds.every(id => comboIds.includes(id)) && comboIds.every(id => selectedIds.includes(id));
     });
 
-    if (matchingVariant) {
-      setSelectedVariant(matchingVariant.variant);
-      const moq = matchingVariant.variant.moq || 1;
-      const newQty = quantity < moq ? moq : quantity;
-      if (quantity < moq) {
-        setQuantity(newQty);
+    if (exactMatch) {
+      // Perfect match found
+      setSelectedAttributes(newSelections);
+      setSelectedVariant(exactMatch.variant);
+      updatePriceAndQuantity(exactMatch.variant);
+      return;
+    }
+
+    // 2. Pivot Logic: If no exact match, find ANY variant that has this specific attribute value
+    // This handles switching between disjoint variants (e.g., Length -> Print Type)
+    const pivotVariant = availableCombinations.find((combo) => 
+      combo.attributeValueIds.includes(attributeValueId)
+    );
+
+    if (pivotVariant) {
+      // Switch to this new variant entirely
+      const newAttributes = {};
+      if (pivotVariant.variant.attributes) {
+        pivotVariant.variant.attributes.forEach(attr => {
+          newAttributes[attr.attributeId] = attr.attributeValueId;
+        });
       }
-      const priceInfo = getEffectivePrice(matchingVariant.variant, newQty);
-      setEffectivePriceInfo(priceInfo);
+      setSelectedAttributes(newAttributes);
+      setSelectedVariant(pivotVariant.variant);
+      updatePriceAndQuantity(pivotVariant.variant);
     } else {
+      // Should not happen if UI is correct, but safe fallback
+      setSelectedAttributes(newSelections);
       setSelectedVariant(null);
       setEffectivePriceInfo(null);
     }
+  };
+
+  const updatePriceAndQuantity = (variant) => {
+    const moq = variant.moq || 1;
+    // Reset quantity to MOQ when switching variants to prevent invalid quantities
+    setQuantity(moq);
+    const priceInfo = getEffectivePrice(variant, moq);
+    setEffectivePriceInfo(priceInfo);
   };
 
   // Get available values for an attribute
@@ -185,26 +194,11 @@ export default function ProductContent({ slug }) {
     const attribute = product.attributeOptions.find((attr) => attr.id === attributeId);
     if (!attribute || !attribute.values) return [];
 
-    const otherSelections = { ...selectedAttributes };
-    delete otherSelections[attributeId];
-
-    const availableValueIds = new Set();
-    availableCombinations.forEach((combo) => {
-      const comboValueIds = combo.attributeValueIds;
-      const otherSelectedIds = Object.values(otherSelections);
-
-      const matchesOtherSelections = otherSelectedIds.length === 0 || otherSelectedIds.every((id) => comboValueIds.includes(id));
-
-      if (matchesOtherSelections) {
-        combo.variant.attributes?.forEach((attr) => {
-          if (attr.attributeId === attributeId) {
-            availableValueIds.add(attr.attributeValueId);
-          }
-        });
-      }
-    });
-
-    return attribute.values.filter((val) => availableValueIds.has(val.id));
+    // Simply allow ANY value that exists in available combinations
+    // This allows users to see all options and "pivot" to them
+    return attribute.values.filter((val) => 
+      availableCombinations.some(combo => combo.attributeValueIds.includes(val.id))
+    );
   };
 
   // Check wishlist status
@@ -560,9 +554,9 @@ export default function ProductContent({ slug }) {
       </div>
 
       {/* Product Info */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         {/* Product Images */}
-        <div className="w-full">
+        <div className="w-full lg:col-span-5">
           {loading ? <div className="aspect-square w-full bg-gray-100 rounded-lg animate-pulse"></div> : error ? (
             <div className="aspect-square w-full bg-gray-100 rounded-lg flex items-center justify-center">
               <div className="text-center p-6"><AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" /><p className="text-red-600">{error}</p></div>
@@ -571,18 +565,13 @@ export default function ProductContent({ slug }) {
         </div>
 
         {/* Right Column - Product Details */}
-        <div className="flex flex-col space-y-6">
+        <div className="flex flex-col space-y-6 lg:col-span-7">
           {product.brand && <Link href={`/brand/${product.brand.slug}`} className="text-orange-500 text-sm mb-1">{product.brand?.name ?? product.brand ?? product.brandName ?? ""}</Link>}
 
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 uppercase tracking-wide">{product.name}</h1>
 
           {/* Rating */}
-          <div className="flex items-center mb-4">
-            <div className="flex text-yellow-400 mr-2">
-              {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 md:h-5 md:w-5" fill={i < Math.round(product.avgRating || 0) ? "currentColor" : "none"} />)}
-            </div>
-            <span className="text-sm text-gray-500">{product.avgRating ? `${product.avgRating} (${product.reviewCount} reviews)` : "No reviews yet"}</span>
-          </div>
+          {/* Rating Removed */}
 
           {/* Flash Sale Banner */}
           {product.flashSale?.isActive && (
@@ -744,7 +733,6 @@ export default function ProductContent({ slug }) {
         <div className="border-b border-gray-200">
           <div className="flex overflow-x-auto">
             <button className={`px-6 py-3 font-medium text-sm uppercase transition-colors ${activeTab === "description" ? "border-b-2 border-primary text-primary" : "text-gray-500 hover:text-gray-700"}`} onClick={() => setActiveTab("description")}>Description</button>
-            <button className={`px-6 py-3 font-medium text-sm uppercase transition-colors ${activeTab === "reviews" ? "border-b-2 border-primary text-primary" : "text-gray-500 hover:text-gray-700"}`} onClick={() => setActiveTab("reviews")}>Reviews ({product.reviewCount || 0})</button>
             <button className={`px-6 py-3 font-medium text-sm uppercase transition-colors ${activeTab === "shipping" ? "border-b-2 border-primary text-primary" : "text-gray-500 hover:text-gray-700"}`} onClick={() => setActiveTab("shipping")}>Shipping & Returns</button>
           </div>
         </div>
@@ -765,7 +753,7 @@ export default function ProductContent({ slug }) {
             </div>
           )}
 
-          {activeTab === "reviews" && <ReviewSection product={product} />}
+          {/* Reviews tab content removed */}
 
           {activeTab === "shipping" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -778,14 +766,7 @@ export default function ProductContent({ slug }) {
                 </ul>
               </div>
 
-              <div>
-                <h3 className="font-semibold text-lg mb-4">Return Policy</h3>
-                <ul className="space-y-4">
-                  <li className="pb-4 border-b border-gray-100"><p className="font-medium mb-1">Return Window</p><p className="text-gray-600 text-sm">30 days from the date of delivery</p></li>
-                  <li className="pb-4 border-b border-gray-100"><p className="font-medium mb-1">Condition</p><p className="text-gray-600 text-sm">Product must be unused and in original packaging</p></li>
-                  <li className="pb-4 border-b border-gray-100"><p className="font-medium mb-1">Process</p><p className="text-gray-600 text-sm">Initiate return from your account and we&apos;ll arrange pickup</p></li>
-                </ul>
-              </div>
+              
             </div>
           )}
         </div>
