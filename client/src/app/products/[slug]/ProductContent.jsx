@@ -568,7 +568,7 @@ export default function ProductContent({ slug }) {
         <div className="flex flex-col space-y-6 lg:col-span-7">
           {product.brand && <Link href={`/brand/${product.brand.slug}`} className="text-orange-500 text-sm mb-1">{product.brand?.name ?? product.brand ?? product.brandName ?? ""}</Link>}
 
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 uppercase tracking-wide">{product.name}</h1>
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3  tracking-wide">{product.name}</h1>
 
           {/* Rating */}
           {/* Rating Removed */}
