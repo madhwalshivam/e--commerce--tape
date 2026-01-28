@@ -87,7 +87,7 @@ export default function ProductContent({ slug }) {
             // Default to the first active variant
             const firstVariant = productData.variants[0];
             setSelectedVariant(firstVariant);
-            
+
             // Set initial selected attributes based on this variant
             const initialAttributes = {};
             if (firstVariant.attributes) {
@@ -138,7 +138,7 @@ export default function ProductContent({ slug }) {
   const handleAttributeChange = (attributeId, attributeValueId) => {
     // 1. Try to maintain current selections + new selection
     const newSelections = { ...selectedAttributes, [attributeId]: attributeValueId };
-    
+
     // Check if this exact combination exists
     const exactMatch = availableCombinations.find((combo) => {
       const comboIds = combo.attributeValueIds;
@@ -156,7 +156,7 @@ export default function ProductContent({ slug }) {
 
     // 2. Pivot Logic: If no exact match, find ANY variant that has this specific attribute value
     // This handles switching between disjoint variants (e.g., Length -> Print Type)
-    const pivotVariant = availableCombinations.find((combo) => 
+    const pivotVariant = availableCombinations.find((combo) =>
       combo.attributeValueIds.includes(attributeValueId)
     );
 
@@ -196,7 +196,7 @@ export default function ProductContent({ slug }) {
 
     // Simply allow ANY value that exists in available combinations
     // This allows users to see all options and "pivot" to them
-    return attribute.values.filter((val) => 
+    return attribute.values.filter((val) =>
       availableCombinations.some(combo => combo.attributeValueIds.includes(val.id))
     );
   };
@@ -733,7 +733,7 @@ export default function ProductContent({ slug }) {
         <div className="border-b border-gray-200">
           <div className="flex overflow-x-auto">
             <button className={`px-6 py-3 font-medium text-sm uppercase transition-colors ${activeTab === "description" ? "border-b-2 border-primary text-primary" : "text-gray-500 hover:text-gray-700"}`} onClick={() => setActiveTab("description")}>Description</button>
-            <button className={`px-6 py-3 font-medium text-sm uppercase transition-colors ${activeTab === "shipping" ? "border-b-2 border-primary text-primary" : "text-gray-500 hover:text-gray-700"}`} onClick={() => setActiveTab("shipping")}>Shipping & Returns</button>
+            <button className={`px-6 py-3 font-medium text-sm uppercase transition-colors ${activeTab === "shipping" ? "border-b-2 border-primary text-primary" : "text-gray-500 hover:text-gray-700"}`} onClick={() => setActiveTab("shipping")}>Shipping</button>
           </div>
         </div>
 
@@ -766,7 +766,7 @@ export default function ProductContent({ slug }) {
                 </ul>
               </div>
 
-              
+
             </div>
           )}
         </div>
