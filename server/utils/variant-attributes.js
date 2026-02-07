@@ -13,10 +13,10 @@ export const formatVariantWithAttributes = (variant) => {
   // Extract attributes from VariantAttributeValue relations
   const attributes = variant.attributes
     ? variant.attributes.map((vav) => ({
-      attribute: vav.attributeValue.attribute.name,
-      value: vav.attributeValue.value,
-      attributeId: vav.attributeValue.attribute.id,
-      attributeValueId: vav.attributeValue.id,
+      attribute: vav.attributeValue?.attribute?.name || "Unknown",
+      value: vav.attributeValue?.value || "Unknown",
+      attributeId: vav.attributeValue?.attribute?.id || "",
+      attributeValueId: vav.attributeValue?.id || "",
     }))
     : [];
 

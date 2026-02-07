@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ClientOnly } from "@/components/client-only";
 import { fetchApi } from "@/lib/utils";
 import { Trash2, Heart, ShoppingBag, AlertCircle } from "lucide-react";
-import { ProductCard } from "@/components/products/ProductCard";
+import { ProductCard } from "@/components/cards/ProductCard";
 
 export default function WishlistPage() {
     const { isAuthenticated, loading } = useAuth();

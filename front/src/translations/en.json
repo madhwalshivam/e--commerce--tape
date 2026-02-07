@@ -41,7 +41,9 @@
         "gateway_keys": "Gateway Keys",
         "shipping": "Shipping",
         "shiprocket": "Shiprocket",
-        "language": "Language"
+        "parcelx": "ParcelX",
+        "language": "Language",
+        "change_password": "Change Password"
     },
     "admin": {
         "admin_dashboard": "Admin Dashboard",
@@ -52,6 +54,25 @@
             "admin": "Admin",
             "user": "User"
         }
+    },
+    "profile": {
+        "change_password_title": "Change Password",
+        "change_password_desc": "Update your account password to keep your admin access secure.",
+        "current_password": "Current Password",
+        "new_password": "New Password",
+        "confirm_password": "Confirm New Password",
+        "enter_current_password": "Enter your current password",
+        "enter_new_password": "Enter a new password (min. 8 characters)",
+        "confirm_new_password": "Re-enter your new password",
+        "current_password_required": "Current password is required.",
+        "new_password_required": "New password is required.",
+        "password_min_length": "New password must be at least 8 characters.",
+        "confirm_password_required": "Please confirm your new password.",
+        "password_mismatch": "New password and confirmation do not match.",
+        "password_changed": "Your password has been changed successfully.",
+        "password_change_error": "Failed to change password. Please try again.",
+        "changing": "Changing...",
+        "change_password": "Change Password"
     },
     "settings": {
         "title": "Language Settings",
@@ -99,6 +120,101 @@
             "title": "PhonePe Configuration",
             "save_button": "Save PhonePe Settings"
         }
+    },
+    "parcelx_settings": {
+        "title": "ParcelX Settings",
+        "description": "Configure ParcelX shipping integration for automated order fulfillment",
+        "enable_title": "Enable ParcelX Integration",
+        "enable_desc": "Automatically create shipping orders when payment is successful",
+        "api_credentials": {
+            "title": "API Credentials",
+            "description": "Enter your ParcelX API credentials",
+            "api_key": "API Key",
+            "api_key_placeholder": "Enter ParcelX API Key",
+            "api_secret": "API Secret",
+            "api_secret_placeholder": "Enter ParcelX API Secret",
+            "base_url": "Base URL",
+            "base_url_placeholder": "Enter ParcelX Base URL"
+        },
+        "shipping_charges": {
+            "title": "Shipping Charges",
+            "description": "Default shipping rates for ParcelX",
+            "charge": "Shipping Charge (₹)",
+            "threshold": "Free Shipping Threshold (₹)"
+        },
+        "default_dimensions": {
+            "title": "Default Shipping Dimensions",
+            "description": "Used when variant specific dimensions are not provided",
+            "info": "These dimensions (L x B x H) and weight are used as fallback defaults during order creation.",
+            "length": "Length (cm)",
+            "breadth": "Breadth (cm)",
+            "height": "Height (cm)",
+            "weight": "Weight (kg)",
+            "save_success": "Dimensions updated successfully"
+        },
+        "how_to_get_credentials": {
+            "title": "How to get API credentials:",
+            "step1": "Login to your ParcelX account",
+            "step2": "Navigate to Settings > API Details",
+            "step3": "Copy your API Key and Secret and paste them here"
+        },
+        "pickup_addresses": {
+            "title": "Pickup Addresses",
+            "description": "Manage locations where couriers will pick up your orders",
+            "add_button": "Add Pickup Address",
+            "no_addresses": "No pickup addresses found",
+            "add_hint": "Add your first pickup address to enable shipping",
+            "default_badge": "Default",
+            "edit": "Edit"
+        },
+        "address_form": {
+            "add_title": "Add Pickup Address",
+            "edit_title": "Edit Pickup Address",
+            "nickname": "Nickname",
+            "nickname_placeholder": "e.g., Primary Warehouse",
+            "contact_name": "Contact Name",
+            "contact_placeholder": "Enter contact person name",
+            "email": "Email",
+            "email_placeholder": "Enter contact email",
+            "phone": "Phone",
+            "phone_placeholder": "Enter contact phone number",
+            "address1": "Address Line 1",
+            "address1_placeholder": "Building, Street name",
+            "address2": "Address Line 2",
+            "address2_placeholder": "Area, Landmark (optional)",
+            "city": "City",
+            "city_placeholder": "Enter city",
+            "state": "State",
+            "state_placeholder": "Enter state",
+            "pincode": "Pincode",
+            "pincode_placeholder": "Enter 6-digit pincode",
+            "set_default": "Set as default pickup address"
+        },
+        "messages": {
+            "loading": "Loading settings...",
+            "save_success": "Settings saved successfully",
+            "save_error": "Failed to save settings",
+            "credentials_required": "API Key and Secret are required to enable",
+            "enabled": "ParcelX integration enabled",
+            "disabled": "ParcelX integration disabled",
+            "address_created": "Address added successfully",
+            "address_updated": "Address updated successfully",
+            "address_deleted": "Address deleted successfully",
+            "address_error": "Failed to save address",
+            "fill_required": "Please fill all required fields"
+        },
+        "buttons": {
+            "save": "Save Settings",
+            "saving": "Saving...",
+            "cancel": "Cancel",
+            "add_address": "Add Address",
+            "update_address": "Update Address",
+            "test_connection": "Test Connection"
+        },
+        "test_connection": "Test Connection",
+        "testing": "Testing...",
+        "connection_success": "Connection successful!",
+        "connection_failed": "Connection failed"
     },
     "payment_settings": {
         "title": "Payment Settings",
@@ -1183,6 +1299,10 @@
             "mark_delivered": "Mark as Delivered",
             "mark_paid": "Mark Paid",
             "cancel": "Cancel Order",
+            "delete": "Delete Order",
+            "delete_confirm": "Are you sure you want to delete this order? This action cannot be undone.",
+            "delete_success": "Order deleted successfully",
+            "delete_error": "Failed to delete order",
             "load_error": "Failed to load orders",
             "status_update_success": "Order status updated to {status}",
             "status_update_error": "Failed to update order status"
@@ -1276,7 +1396,11 @@
         "common": {
             "enabled": "Enabled",
             "disabled": "Disabled",
-            "days": "{count} days"
+            "days": "{count} days",
+            "name": "Name",
+            "email": "Email",
+            "phone": "Phone",
+            "number": "Number"
         },
         "status_label": "Status"
     },
@@ -2103,13 +2227,13 @@
             "confirm_delete": "Delete this pricing slab?"
         },
         "shipping": {
-            "title": "Shipping Dimensions (for Shiprocket)",
+            "title": "Shipping Dimensions",
             "optional": "Optional",
             "length": "Length (cm)",
             "breadth": "Breadth (cm)",
             "height": "Height (cm)",
             "weight": "Weight (kg)",
-            "hint": "Leave empty to use default dimensions from Shiprocket settings"
+            "hint": "Leave empty to use default dimensions from shipping settings"
         },
         "images": {
             "title": "Add variant images",

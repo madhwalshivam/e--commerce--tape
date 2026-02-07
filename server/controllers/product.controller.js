@@ -21,6 +21,7 @@ export const getAllProducts = asyncHandler(async (req, res) => {
     trending,
     newArrival,
     productType,
+    ourProduct,
     color, // For backward compatibility
     size, // For backward compatibility
     attributeValueIds, // Comma-separated attribute value IDs for filtering
@@ -91,6 +92,10 @@ export const getAllProducts = asyncHandler(async (req, res) => {
         { featured: true },
         { productType: { array_contains: ["featured"] } }
       ]
+    }),
+    // Filter by ourProduct
+    ...(ourProduct === "true" && {
+      ourProduct: true,
     }),
     // Filter by product types (bestseller, trending, new, etc.)
     ...(productTypeConditions.length > 0 && {
@@ -384,39 +389,42 @@ export const getAllProducts = asyncHandler(async (req, res) => {
 
 // Get product details by slug
 export const getProductBySlug = asyncHandler(async (req, res) => {
-  const { slug } = req.params;
-
-  const product = await prisma.product.findUnique({
+  const { slug } = req.params; // Fetch product
+  const product = await prisma.product.findFirst({
     where: {
       slug,
-      isActive: true,
+      isActive: true, // Only fetch active products
     },
     include: {
+      images: {
+        orderBy: { order: "asc" },
+      },
       categories: {
         include: {
           category: true,
         },
       },
-      brand: true,
-      images: {
-        orderBy: { isPrimary: "desc" },
+      subCategories: {
+        include: {
+          subCategory: true,
+        },
       },
       variants: {
-        where: { isActive: true },
+        where: { isActive: true }, // Only fetch active variants
         include: {
           attributes: {
             include: {
               attributeValue: {
                 include: {
-                  attribute: true,
-                },
-              },
-            },
+                  attribute: true
+                }
+              }
+            }
           },
           images: {
             orderBy: { order: "asc" }, // Sort images by order (0, 1, 2, 3...)
           },
-        },
+        }
       },
       reviews: {
         where: { status: "APPROVED" },
@@ -424,12 +432,51 @@ export const getProductBySlug = asyncHandler(async (req, res) => {
           user: {
             select: {
               id: true,
-              name: true,
-            },
-          },
+              name: true
+            }
+          }
         },
-        orderBy: { createdAt: "desc" },
-        take: 5,
+        orderBy: { createdAt: 'desc' },
+        take: 5
+      },
+      brand: true,
+      pricingSlabs: {
+        orderBy: { minQty: "asc" },
+      },
+      moqSettings: true,
+      // Include variant group if this product is part of one
+      variantGroupItems: {
+        include: {
+          variantGroup: {
+            include: {
+              items: {
+                orderBy: { order: 'asc' },
+                include: {
+                  product: {
+                    select: {
+                      id: true,
+                      name: true,
+                      slug: true,
+                      images: {
+                        where: { isPrimary: true },
+                        take: 1
+                      },
+                      isActive: true,
+                      variants: {
+                        where: { isActive: true },
+                        take: 1,
+                        select: {
+                          price: true,
+                          salePrice: true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       _count: {
         select: {
@@ -616,19 +663,50 @@ export const getProductBySlug = asyncHandler(async (req, res) => {
     metaDescription: product.metaDescription || product.description,
     keywords: product.keywords || "",
     // Add price fields for fallback when no variant is selected
+    // Priority: variants[0].salePrice (if exists) > variants[0].price
     basePrice:
       product.variants.length > 0
-        ? parseFloat(
-          product.variants[0].salePrice || product.variants[0].price || 0
-        )
+        ? parseFloat(product.variants[0].salePrice || product.variants[0].price || 0)
         : 0,
     hasSale:
-      product.variants.length > 0 && product.variants[0].salePrice !== null,
+      product.variants.length > 0 &&
+      product.variants[0].salePrice !== null &&
+      product.variants[0].salePrice !== undefined &&
+      parseFloat(product.variants[0].salePrice) < parseFloat(product.variants[0].price),
     regularPrice:
       product.variants.length > 0
         ? parseFloat(product.variants[0].price || 0)
         : 0,
+
+    // Format Variant Group (Linked products)
+    variantGroup: product.variantGroupItems?.[0]?.variantGroup ? {
+      id: product.variantGroupItems[0].variantGroup.id,
+      name: product.variantGroupItems[0].variantGroup.name,
+      type: product.variantGroupItems[0].variantGroup.type || "Color",
+      items: (product.variantGroupItems[0].variantGroup.items || []).map(item => ({
+        id: item.id,
+        productId: item.productId,
+        label: item.label,
+        order: item.order,
+        isDefault: item.isDefault,
+        product: item.product ? {
+          id: item.product.id,
+          name: item.product.name,
+          slug: item.product.slug,
+          images: (item.product.images || []).map(img => ({
+            id: img.id,
+            url: getFileUrl(img.url),
+            isPrimary: img.isPrimary
+          })),
+          price: item.product.variants?.[0]?.price || 0,
+          salePrice: item.product.variants?.[0]?.salePrice || null
+        } : null
+      }))
+    } : null,
   };
+
+  // Remove raw relation items that are now formatted
+  delete formattedProduct.variantGroupItems;
 
   // Fetch flash sale for this product
   const now = new Date();

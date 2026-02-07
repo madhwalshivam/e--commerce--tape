@@ -48,7 +48,7 @@ const CartItem = React.memo(
             }
 
             // Fallback to placeholder
-            return "/placeholder.jpg";
+            return "/tape.svg";
         };
 
         // Get variant display name - handle both guest cart and server cart structures
@@ -92,12 +92,12 @@ const CartItem = React.memo(
         return (
             <div className="p-4 md:p-5 grid grid-cols-1 md:grid-cols-12 gap-4 items-center hover:bg-gray-50/50 transition-colors duration-200">
                 <div className="md:col-span-6 flex items-center">
-                    <div className="relative h-24 w-24 md:h-28 md:w-28 bg-gray-100 rounded-lg overflow-hidden mr-4 flex-shrink-0 shadow-sm border border-gray-200 group">
+                    <div className="relative h-24 w-24 md:h-28 md:w-28 bg-white rounded-lg overflow-hidden mr-4 flex-shrink-0 shadow-sm border border-gray-200 group">
                         <Image
                             src={productImage}
                             alt={productName}
                             fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="object-contain p-1 group-hover:scale-105 transition-transform duration-300"
                             sizes="112px"
                         />
                     </div>

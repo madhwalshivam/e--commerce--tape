@@ -1,14 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchApi } from "@/lib/utils";
 import { getCategoryImageUrl } from "@/lib/imageUrl";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function CategoriesCarousel() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const scrollContainerRef = useRef(null);
+
+  const scroll = (direction) => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, clientWidth } = scrollContainerRef.current;
+      const scrollAmount = clientWidth * 0.6;
+      const targetScroll = direction === 'left' ? scrollLeft - scrollAmount : scrollLeft + scrollAmount;
+
+      scrollContainerRef.current.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -44,31 +59,48 @@ export default function CategoriesCarousel() {
   if (!categories.length) return null;
 
   return (
-    <section className="py-4 bg-white border-b border-gray-100 w-full">
-      <div className="section-container">
+    <section className="py-8 bg-gray-50/30 border-b border-gray-100 w-full overflow-hidden group">
+      <div className="section-container relative">
+        {/* Navigation Arrows */}
+        <button
+          onClick={() => scroll('left')}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg border border-gray-100 rounded-full flex items-center justify-center -ml-5 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex hover:bg-black hover:text-white"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+
+        <button
+          onClick={() => scroll('right')}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg border border-gray-100 rounded-full flex items-center justify-center -mr-5 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex hover:bg-black hover:text-white"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+
         <div className="relative">
-          <div className="flex items-start justify-start lg:justify-evenly gap-4 sm:gap-5 md:gap-6 overflow-x-auto pb-2 scrollbar-hide">
+          <div
+            ref={scrollContainerRef}
+            className="flex items-center justify-start gap-6 md:gap-10 overflow-x-auto pb-4 scrollbar-hide px-4"
+          >
             {categories.slice(0, 10).map((category) => (
-              <Link 
-                key={category.id} 
-                href={`/category/${category.slug}`}
-                className="flex-shrink-0 group text-center"
+              <Link
+                key={category.id}
+                href={`/products?category=${category.slug}`}
+                className="flex-shrink-0 group text-center min-w-[100px]"
               >
-                {/* Image Container */}
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-gray-100 mx-auto shadow-sm group-hover:shadow-md transition-shadow">
+                {/* Square Card Container */}
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-[20px] overflow-hidden bg-white mx-auto shadow-[0_2px_15px_rgba(0,0,0,0.04)] border border-gray-50 group-hover:border-[#F7941D]/20 group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all duration-500 p-4 sm:p-6">
                   <Image
                     src={getCategoryImageUrl(category.image)}
                     alt={category.name}
                     fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                    className="object-contain p-4 sm:p-5 transition-transform duration-500 group-hover:scale-110"
+                    sizes="(max-width: 768px) 100px, 130px"
                   />
-                  {/* Subtle overlay on hover only */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-primary/20 transition-all duration-300" />
                 </div>
-                {/* Text Below Image */}
-                <p className="mt-2 text-[10px] sm:text-xs md:text-sm font-medium text-gray-700 group-hover:text-primary transition-colors leading-tight max-w-[70px] sm:max-w-[85px] md:max-w-[100px] mx-auto truncate">
+                {/* Label */}
+                <h3 className="mt-3 font-sans text-[11px] sm:text-[12px] font-medium text-gray-600 group-hover:text-black transition-colors whitespace-nowrap overflow-hidden text-ellipsis max-w-full px-1">
                   {category.name}
-                </p>
+                </h3>
               </Link>
             ))}
           </div>

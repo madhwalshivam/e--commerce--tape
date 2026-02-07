@@ -81,15 +81,15 @@ const FlashSaleProductCard = ({ product, discountPercentage }) => {
                 </div>
 
                 {/* Image Container */}
-                <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+                <div className="relative aspect-square overflow-hidden bg-white border border-gray-200">
                     <Image
                         src={getImageUrl(product.image)}
                         alt={product.name}
                         fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        className="object-contain p-2 group-hover:scale-110 transition-transform duration-700"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                     />
-                    
+
                     {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
                         <span className="bg-white text-primary px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 shadow-xl">
@@ -104,7 +104,7 @@ const FlashSaleProductCard = ({ product, discountPercentage }) => {
                     <h3 className="font-semibold text-gray-800 line-clamp-2 text-sm md:text-base mb-3 group-hover:text-primary transition-colors min-h-[40px]">
                         {product.name}
                     </h3>
-                    
+
                     {/* Prices */}
                     <div className="flex items-end gap-2 flex-wrap">
                         <span className="text-xl md:text-2xl font-bold text-primary">
@@ -114,7 +114,7 @@ const FlashSaleProductCard = ({ product, discountPercentage }) => {
                             {formatCurrency(product.priceBeforeFlashSale || product.originalPrice)}
                         </span>
                     </div>
-                    
+
                     {/* Savings Badge */}
                     <div className="mt-2 inline-flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
                         <span>You Save</span>
@@ -172,39 +172,24 @@ export function FlashSaleSection() {
     const currentSale = flashSales[0];
 
     return (
-        <section className="py-12 md:py-16 bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 relative overflow-hidden">
-            {/* Decorative Elements */}
-            <div className="absolute top-0 left-0 w-64 h-64 bg-gradient-to-br from-orange-200/40 to-transparent rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-tl from-red-200/40 to-transparent rounded-full blur-3xl translate-x-1/3 translate-y-1/3"></div>
-            <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-gradient-to-br from-yellow-100/30 to-transparent rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-
-            <div className="max-w-7xl mx-auto px-4 relative z-10">
-                {/* Header Section */}
-                <div className="text-center mb-10">
-                    {/* Badge */}
-                    <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-5 py-2 rounded-full shadow-lg mb-4">
-                        <Zap className="w-5 h-5 animate-pulse" />
-                        <span className="font-bold text-sm tracking-wide">LIMITED TIME OFFER</span>
-                        <Zap className="w-5 h-5 animate-pulse" />
-                    </div>
-                    
-                    {/* Title */}
-                    <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-2">
-                        <span className="bg-gradient-to-r from-orange-600 via-red-500 to-pink-500 bg-clip-text text-transparent">
-                            Flash Sale
-                        </span>
-                        <span className="ml-2">🔥</span>
+        <section className="py-20 bg-white border-y border-gray-50">
+            <div className="section-container">
+                {/* Header - Premium D2C Style */}
+                <div className="text-center mb-16 relative">
+                    <h2 className="font-display text-4xl md:text-5xl font-black text-black tracking-tight uppercase mb-4">
+                        FLASH <span className="text-[#F7941D]">SALE</span>
                     </h2>
-                    <p className="text-gray-600 mb-6 text-lg">{currentSale.name}</p>
-                    
-                    {/* Timer Section */}
-                    <div className="inline-flex flex-col items-center gap-3 bg-white/80 backdrop-blur-sm px-6 py-4 rounded-2xl shadow-lg border border-orange-100">
-                        <div className="flex items-center gap-2 text-gray-700">
-                            <Timer className="w-5 h-5 text-primary" />
-                            <span className="font-semibold">Hurry! Offer ends in:</span>
-                        </div>
-                        <CountdownTimer endTime={currentSale.endTime} />
+                    <div className="w-24 h-1 bg-[#F7941D] mx-auto mb-6" />
+                    <p className="text-gray-500 font-medium tracking-widest uppercase text-xs">Limited time deals on your favorites</p>
+                </div>
+
+                {/* Timer Section - Centered and Clean */}
+                <div className="flex flex-col items-center gap-6 mb-16">
+                    <div className="flex items-center gap-2 text-black/40 font-display font-black text-xs uppercase tracking-[0.2em]">
+                        <Timer className="w-4 h-4" />
+                        Offer Ends In:
                     </div>
+                    <CountdownTimer endTime={currentSale.endTime} />
                 </div>
 
                 {/* Products Grid */}

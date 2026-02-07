@@ -587,7 +587,7 @@ export default function DashboardPage() {
                       className="flex items-center gap-4 pb-4 border-b border-[#E5E7EB] last:border-0 last:pb-0"
                     >
                       <div
-                        className="h-14 w-14 rounded-lg bg-[#F3F4F6] border border-[#E5E7EB] flex-shrink-0"
+                        className="h-14 w-14 rounded-lg bg-white border border-[#E5E7EB] flex-shrink-0 overflow-hidden"
                         style={{
                           backgroundImage:
                             product.images && product.images[0]
@@ -595,8 +595,9 @@ export default function DashboardPage() {
                                 product.images[0].url || product.images[0]
                               )})`
                               : "none",
-                          backgroundSize: "cover",
+                          backgroundSize: "contain",
                           backgroundPosition: "center",
+                          backgroundRepeat: "no-repeat",
                         }}
                       />
                       <div className="flex-1 min-w-0">
@@ -678,13 +679,14 @@ export default function DashboardPage() {
                       className="flex items-center gap-3 pb-3 border-b border-[#E5E7EB] last:border-0 last:pb-0"
                     >
                       <div
-                        className="h-12 w-12 rounded-lg bg-[#F3F4F6] border border-[#E5E7EB] flex-shrink-0"
+                        className="h-12 w-12 rounded-lg bg-white border border-[#E5E7EB] flex-shrink-0 overflow-hidden"
                         style={{
                           backgroundImage: alert.image
                             ? `url(${getImageUrl(alert.image)})`
                             : "none",
-                          backgroundSize: "cover",
+                          backgroundSize: "contain",
                           backgroundPosition: "center",
+                          backgroundRepeat: "no-repeat",
                         }}
                       />
                       <div className="min-w-0 flex-1">
@@ -814,7 +816,7 @@ export default function DashboardPage() {
                         className="flex items-center gap-4 p-3 border border-[#E5E7EB] rounded-lg hover:bg-[#F3F7F6] transition-colors"
                       >
                         <div
-                          className="h-12 w-12 rounded-lg bg-[#F3F4F6] border border-[#E5E7EB] flex-shrink-0"
+                          className="h-12 w-12 rounded-lg bg-white border border-[#E5E7EB] flex-shrink-0 overflow-hidden"
                           style={{
                             backgroundImage: returnReq.orderItem?.product
                               ?.images?.[0]
@@ -828,8 +830,9 @@ export default function DashboardPage() {
                                   returnReq.orderItem.variant.images[0]
                                 )})`
                                 : "none",
-                            backgroundSize: "cover",
+                            backgroundSize: "contain",
                             backgroundPosition: "center",
+                            backgroundRepeat: "no-repeat",
                           }}
                         />
                         <div className="flex-1 min-w-0">

@@ -4,40 +4,40 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchApi } from "@/lib/utils";
-import { getCategoryImageUrl, getImageUrl } from "@/lib/imageUrl";
-import { ArrowRight, Grid3X3 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { getImageUrl } from "@/lib/imageUrl";
 
-export function ShopByCategory() {
-  const [categories, setCategories] = useState([]);
+export function ShopByCategory() { // Keeping component name constant to avoid external import breakages
+  const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchBrands = async () => {
       try {
-        const response = await fetchApi("/public/categories");
-        setCategories(response.data.categories || []);
+        // Fetch all brands from the dedicated endpoint
+        const response = await fetchApi("/public/brands");
+
+        if (response.success && response.data.brands) {
+          setBrands(response.data.brands);
+        }
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error("Error fetching brands:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchCategories();
+    fetchBrands();
   }, []);
-
-
 
   if (loading) {
     return (
-      <section className="section-padding bg-gradient-section">
+      <section className="py-20 bg-gray-50/50">
         <div className="section-container">
-          <div className="section-header">
-            <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mx-auto mb-4" />
+          <div className="flex justify-center mb-10">
+            <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="aspect-square rounded-2xl bg-gray-200 animate-pulse" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 md:gap-8">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="aspect-square rounded-full bg-gray-200 animate-pulse" />
             ))}
           </div>
         </div>
@@ -45,56 +45,52 @@ export function ShopByCategory() {
     );
   }
 
-  if (!categories.length) return null;
+  if (!brands.length) return null;
 
   return (
-    <section className="section-padding bg-gradient-section">
+    <section className="py-20 bg-gray-50/50">
       <div className="section-container">
         {/* Header */}
-        <div className="section-header">
-          <span className="section-badge">
-            <Grid3X3 className="w-4 h-4" />
-            Categories
-          </span>
-          <h2 className="section-title">Shop by Category</h2>
-          <p className="section-subtitle">Browse our wide range of product categories</p>
+        <div className="text-center mb-16 relative">
+          <h2 className="font-sans text-3xl md:text-4xl font-bold tracking-tight uppercase mb-4">
+            TOP <span className="text-[#F7941D]">BRANDS</span>
+          </h2>
+          <div className="w-20 h-[3px] bg-[#F7941D] mx-auto mb-6 rounded-full" />
+          <p className="text-gray-400 font-medium tracking-widest uppercase text-[12px]">Our premium partners</p>
         </div>
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-3 lg:grid-cols-4 gap-10 md:gap-24">
-          {categories.slice(0, 8).map((category) => (
-            <Link 
-              key={category.id} 
-              href={`/category/${category.slug}`}
-              className="category-card group"
+        {/* Brands Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 md:gap-8 justify-items-center">
+          {brands.slice(0, 12).map((brand) => (
+            <Link
+              key={brand.id}
+              href={`/products?brand=${brand.slug}`}
+              className="group flex flex-col items-center justify-center gap-4 hover:-translate-y-1 transition-transform duration-300 w-full"
             >
-              <Image
-                src={getCategoryImageUrl(category.image)}
-                alt={category.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 50vw, 25vw"
-              />
-              <div className="category-content">
-                <h3 className="font-semibold text-xs sm:text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 truncate">{category.name}</h3>
-                <p className="text-white/70 text-[10px] sm:text-xs md:text-sm hidden sm:flex items-center gap-1">
-                  Explore <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-                </p>
+              <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm group-hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] group-hover:border-[#F7941D] transition-all duration-300 overflow-hidden">
+                <div className="relative w-20 h-20 md:w-28 md:h-28">
+                  <Image
+                    src={getImageUrl(brand.image || brand.logo)}
+                    alt={brand.name}
+                    fill
+                    className="object-contain transition-all duration-300 group-hover:scale-110"
+                    sizes="(max-width: 768px) 50vw, 15vw"
+                  />
+                </div>
               </div>
+              <span className="font-display font-bold text-sm tracking-widest uppercase text-gray-500 group-hover:text-black transition-colors">
+                {brand.name}
+              </span>
             </Link>
           ))}
         </div>
 
-        {/* View All */}
-        {categories.length > 8 && (
-          <div className="text-center mt-10">
-            <Link href="/categories">
-              <Button size="lg" variant="outline" className="btn-outline h-12 px-8 gap-2">
-                View All Categories <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-        )}
+        {/* Bottom Bar */}
+        <div className="mt-16 text-center">
+          <Link href="/products" className="font-display text-xs font-black tracking-[0.3em] text-gray-400 hover:text-black transition-colors uppercase border-b-2 border-gray-100 pb-1">
+            Discover All Partners
+          </Link>
+        </div>
       </div>
     </section>
   );

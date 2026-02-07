@@ -584,10 +584,10 @@ export default function ProductSectionsPage() {
                                 <img
                                   src={productImage}
                                   alt={item.product.name}
-                                  className="h-14 w-14 rounded-lg object-cover border border-[#E5E7EB]"
+                                  className="h-14 w-14 rounded-lg object-contain p-1 bg-white border border-[#E5E7EB]"
                                 />
                               ) : (
-                                <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-[#F3F4F6] border border-[#E5E7EB]">
+                                <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-white border border-[#E5E7EB]">
                                   <Package className="h-6 w-6 text-[#9CA3AF]" />
                                 </div>
                               )}
@@ -1035,10 +1035,10 @@ export default function ProductSectionsPage() {
                             <img
                               src={productImage}
                               alt={product.name}
-                              className="h-12 w-12 rounded-lg object-cover border border-[#E5E7EB]"
+                              className="h-12 w-12 rounded-lg object-contain p-1 bg-white border border-[#E5E7EB]"
                             />
                           ) : (
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#F3F4F6] border border-[#E5E7EB]">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white border border-[#E5E7EB]">
                               <Package className="h-5 w-5 text-[#9CA3AF]" />
                             </div>
                           )}

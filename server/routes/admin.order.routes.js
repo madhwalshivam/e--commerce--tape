@@ -8,6 +8,7 @@ import {
   processPayment,
   getOrderStats,
   cleanupInvalidPartnerEarnings,
+  deleteOrder,
 } from "../controllers/admin.order.controller.js";
 import {
   verifyAdminJWT,
@@ -73,6 +74,13 @@ router.post(
   verifyAdminJWT,
   hasPermission("orders", "update"),
   cleanupInvalidPartnerEarnings
+);
+
+router.delete(
+  "/orders/:orderId",
+  verifyAdminJWT,
+  hasPermission("orders", "delete"),
+  deleteOrder
 );
 
 export default router;

@@ -61,6 +61,11 @@ async function performFetch(url, options) {
     ...options.headers,
   };
 
+  // If sending FormData, let the browser set the Content-Type header (needed for the boundary)
+  if (options.body instanceof FormData) {
+    delete headers["Content-Type"];
+  }
+
   const config = {
     ...options,
     headers,

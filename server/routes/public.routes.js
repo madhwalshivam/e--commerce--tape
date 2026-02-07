@@ -18,6 +18,7 @@ import {
   getBrandBySlug,
   getFilterAttributes,
   getPriceVisibilitySettings,
+  getAllBrands,
 } from "../controllers/public.controller.js";
 import { getPublishedBanners } from "../controllers/admin.banner.controller.js";
 import { getActiveFlashSales, getActiveProductSections } from "../controllers/public.controller.js";
@@ -38,6 +39,7 @@ router.get("/product-variant", getProductVariant);
 router.get("/products/variants/:id", getProductVariantById);
 
 // Brands
+router.get("/brands", getAllBrands);
 router.get("/brands-by-tag", getBrandsByTag);
 router.get("/brand/:slug", getBrandBySlug);
 

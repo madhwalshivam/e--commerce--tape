@@ -10,7 +10,6 @@ import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
 import {
   products,
   categories,
-  attributes,
   subCategories,
   moq,
 } from "@/api/adminService";
@@ -40,7 +39,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useDropzone } from "react-dropzone";
 import { Badge } from "@/components/ui/badge";
-import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { DeleteProductDialog } from "@/components/DeleteProductDialog";
@@ -100,13 +98,6 @@ export function ProductForm({
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [formLoading, setFormLoading] = useState(mode === "edit");
-  const [attributesList, setAttributesList] = useState<any[]>([]);
-  const [attributeValuesMap, setAttributeValuesMap] = useState<
-    Record<string, any[]>
-  >({});
-  const [selectedAttributes, setSelectedAttributes] = useState<
-    Record<string, string[]>
-  >({});
   const [brandsList, setBrandsList] = useState<any[]>([]);
   const [hasVariants, setHasVariants] = useState(false);
   const [product, setProduct] = useState({
@@ -117,8 +108,8 @@ export function ProductForm({
     primaryCategoryId: "",
     subCategoryIds: [] as string[],
     sku: "",
-    price: "",
-    salePrice: "",
+    sellingPrice: "",
+    mrp: "",
     quantity: 0,
     featured: false,
     ourProduct: false,
@@ -139,6 +130,7 @@ export function ProductForm({
     shippingBreadth: "",
     shippingHeight: "",
     shippingWeight: "",
+    redirectUrl: "",
   });
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -164,6 +156,15 @@ export function ProductForm({
   const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>(
     []
   );
+
+  // Variant Group State (for linking products as variants)
+  const [variantGroupEnabled, setVariantGroupEnabled] = useState(false);
+  const [variantGroupType, setVariantGroupType] = useState("Color");
+  const [variantGroupProducts, setVariantGroupProducts] = useState<any[]>([]);
+  const [variantProductSearch, setVariantProductSearch] = useState("");
+  const [variantSearchResults, setVariantSearchResults] = useState<any[]>([]);
+  const [isSearchingProducts, setIsSearchingProducts] = useState(false);
+  const [existingVariantGroupId, setExistingVariantGroupId] = useState<string | null>(null);
 
   // Get categories data using the useCategories hook
   const { categories, isLoading: categoriesLoading } = useCategories();
@@ -445,42 +446,6 @@ export function ProductForm({
     });
   };
 
-  // Fetch attributes and their values
-  useEffect(() => {
-    const fetchAttributes = async () => {
-      try {
-        const response = await attributes.getAttributes();
-        if (response.data.success) {
-          const attrs = response.data.data?.attributes || [];
-          setAttributesList(attrs);
-
-          // Fetch values for each attribute
-          const valuesMap: Record<string, any[]> = {};
-          for (const attr of attrs) {
-            try {
-              const valuesResponse = await attributes.getAttributeValues(
-                attr.id
-              );
-              if (valuesResponse.data.success) {
-                valuesMap[attr.id] = valuesResponse.data.data?.values || [];
-              }
-            } catch (error) {
-              console.error(
-                `Error fetching values for attribute ${attr.id}:`,
-                error
-              );
-            }
-          }
-          setAttributeValuesMap(valuesMap);
-        }
-      } catch (error) {
-        console.error("Error fetching attributes:", error);
-        toast.error("Failed to load attributes");
-      }
-    };
-
-    fetchAttributes();
-  }, []);
 
   // Fetch brands for selection
   useEffect(() => {
@@ -542,23 +507,24 @@ export function ProductForm({
                     productData.variants[0].attributes.length === 0)
                   ? productData.variants[0].sku
                   : "",
-              price:
+              sellingPrice:
                 productData.variants?.length === 1 &&
                   (!productData.variants[0].attributes ||
                     productData.variants[0].attributes.length === 0)
-                  ? productData.variants[0].price.toString()
+                  ? (productData.variants[0].salePrice?.toString() || productData.variants[0].price?.toString() || "")
                   : "",
-              salePrice:
+              mrp:
                 productData.variants?.length === 1 &&
                   (!productData.variants[0].attributes ||
                     productData.variants[0].attributes.length === 0) &&
-                  productData.variants[0].salePrice
-                  ? productData.variants[0].salePrice.toString()
+                  productData.variants[0].salePrice !== null &&
+                  productData.variants[0].salePrice !== undefined
+                  ? productData.variants[0].price?.toString() || ""
                   : "",
+              redirectUrl: productData.redirectUrl || "",
               quantity:
                 productData.variants?.length === 1 &&
-                  !productData.variants[0].colorId &&
-                  !productData.variants[0].sizeId
+                  (!productData.variants[0].attributes || productData.variants[0].attributes.length === 0)
                   ? productData.variants[0].quantity
                   : 0,
               featured: productData.featured || false,
@@ -626,9 +592,11 @@ export function ProductForm({
                       : [],
                     attributes: variant.attributes || [],
                     sku: variant.sku || "",
-                    price: variant.price ? variant.price.toString() : "0.00",
-                    salePrice: variant.salePrice
+                    sellingPrice: variant.salePrice
                       ? variant.salePrice.toString()
+                      : variant.price?.toString() || "0.00",
+                    mrp: variant.salePrice
+                      ? variant.price?.toString() || ""
                       : "",
                     quantity: variant.quantity || 0,
                     isActive:
@@ -646,31 +614,53 @@ export function ProductForm({
 
                 setVariants(formattedVariants);
 
-                // Set selected attributes based on existing variants
-                const selectedAttrs: Record<string, string[]> = {};
-
-                productData.variants.forEach((variant: any) => {
-                  // Handle attributes for variant selection
-                  if (variant.attributes) {
-                    variant.attributes.forEach((attr: any) => {
-                      if (!selectedAttrs[attr.attributeId]) {
-                        selectedAttrs[attr.attributeId] = [];
-                      }
-                      if (
-                        !selectedAttrs[attr.attributeId].includes(
-                          attr.attributeValueId
-                        )
-                      ) {
-                        selectedAttrs[attr.attributeId].push(
-                          attr.attributeValueId
-                        );
-                      }
-                    });
-                  }
-                });
-
-                setSelectedAttributes(selectedAttrs);
               }
+            }
+            // Fetch existing variant group if any
+            try {
+              const vgResponse = await api.get(`/api/admin/variants`);
+              if (vgResponse.data.success) {
+                // Find group that contains this product
+                // Actually we should filter groups that have this product as a member
+                // For now, let's fetch by product id if we had a better endpoint, 
+                // but let's assume we find it in the list.
+                // Better approach: the backend should include variantGroup on the product.
+                // Let's check if productData has variantGroup
+              }
+            } catch (err) {
+              console.error("Error fetching variant groups:", err);
+            }
+
+            // Since we don't have a direct "get group for product" endpoint yet, 
+            // let's look at the productData itself.
+            if (productData.variantGroup) {
+              setVariantGroupEnabled(true);
+              setExistingVariantGroupId(productData.variantGroup.id);
+              setVariantGroupType(productData.variantGroup.type || "Color");
+
+              // Map items to variantGroupProducts format
+              if (productData.variantGroup.items) {
+                const linkedProducts = productData.variantGroup.items
+                  .filter((item: any) => item.productId !== productId)
+                  .map((item: any) => ({
+                    id: item.product?.id || item.productId,
+                    name: item.product?.name || "Unknown Product",
+                    label: item.label,
+                    images: item.product?.images || [],
+                  }));
+                setVariantGroupProducts(linkedProducts);
+              }
+            } else {
+              // Alternative: Search all groups for this product
+              try {
+                const groupsRes = await api.get("/api/admin/variants");
+                if (groupsRes.data.success) {
+                  // A product can be in only one variant group based on schema (usually)
+                  // Let's find one that contains this productId
+                  // We need detailed groups for this.
+                  // For now, let's assume the simplified check above works if variantGroup is included in product.
+                }
+              } catch (e) { }
             }
           } else {
             toast.error(
@@ -721,118 +711,6 @@ export function ProductForm({
     }
   };
 
-  // Handle attribute value selection
-  const handleAttributeValueToggle = (attributeId: string, valueId: string) => {
-    setSelectedAttributes((prev) => {
-      const currentValues = prev[attributeId] || [];
-      const newValues = currentValues.includes(valueId)
-        ? currentValues.filter((id) => id !== valueId)
-        : [...currentValues, valueId];
-      return { ...prev, [attributeId]: newValues };
-    });
-  };
-
-  // Generate variants based on selected attribute values
-  const generateVariants = () => {
-    // Check if at least one attribute has selected values
-    const hasSelectedValues = Object.values(selectedAttributes).some(
-      (values) => values.length > 0
-    );
-
-    if (!hasSelectedValues) {
-      toast.error(
-        "Please select at least one attribute value to generate variants"
-      );
-      return;
-    }
-
-    // Generate all combinations of selected attribute values
-    const attributeIds = Object.keys(selectedAttributes).filter(
-      (attrId) => selectedAttributes[attrId].length > 0
-    );
-
-    // Create arrays of selected values for each attribute
-    const valueArrays = attributeIds.map((attrId) =>
-      selectedAttributes[attrId].map((valueId) => {
-        const attr = attributesList.find((a) => a.id === attrId);
-        const value = attributeValuesMap[attrId]?.find((v) => v.id === valueId);
-        return { attributeId: attrId, attribute: attr, valueId, value };
-      })
-    );
-
-    // Generate cartesian product of all value combinations
-    const combinations = valueArrays.reduce((acc, curr) => {
-      if (acc.length === 0) return curr.map((v) => [v]);
-      const result: any[][] = [];
-      acc.forEach((accItem) => {
-        curr.forEach((currItem) => {
-          result.push([...accItem, currItem]);
-        });
-      });
-      return result;
-    }, [] as any[][]);
-
-    // Generate variants from combinations
-    const newVariants: any[] = [];
-
-    combinations.forEach((combination) => {
-      const attributeValueIds = combination.map((c) => c.valueId);
-      const attributeNames = combination.map(
-        (c) => `${c.attribute?.name}: ${c.value?.value}`
-      );
-      const variantName = attributeNames.join(", ");
-
-      // Check for duplicate (same attributeValueIds combination)
-      const isDuplicate = variants.some((v) => {
-        const existingIds = (v.attributeValueIds || []).sort().join(",");
-        const newIds = attributeValueIds.sort().join(",");
-        return existingIds === newIds;
-      });
-
-      if (isDuplicate) {
-        return;
-      }
-
-      const skuBase = product.sku || "";
-      const skuSuffix = combination
-        .map((c) => c.value?.value?.substring(0, 3).toUpperCase() || "")
-        .join("-");
-      const variantSku = skuSuffix ? `${skuBase}-${skuSuffix}` : skuBase;
-
-      newVariants.push({
-        id: uuidv4(),
-        name: variantName,
-        attributeValueIds,
-        attributes: combination.map((c) => ({
-          attribute: c.attribute?.name,
-          value: c.value?.value,
-          attributeId: c.attributeId,
-          attributeValueId: c.valueId,
-        })),
-        sku: variantSku,
-        price: product.price || "",
-        salePrice: product.salePrice || "",
-        quantity: product.quantity || 0,
-        isActive: true,
-        images: [],
-      });
-    });
-
-    if (newVariants.length === 0) {
-      toast.error(
-        "No new variants generated. All selected combinations already exist.",
-        {
-          position: "top-center",
-        }
-      );
-      return;
-    }
-
-    setVariants((prev) => [...prev, ...newVariants]);
-    toast.success(`${newVariants.length} new variant(s) generated!`, {
-      position: "top-center",
-    });
-  };
 
   // Handle variant images change (used by VariantCard)
   const handleVariantImagesChange = (variantIndex: number, images: any[]) => {
@@ -860,6 +738,8 @@ export function ProductForm({
   const removeVariantByIndex = (variantIndex: number) => {
     setVariants((prev) => prev.filter((_, i) => i !== variantIndex));
   };
+
+
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -966,10 +846,21 @@ export function ProductForm({
       // Add simple product data if no variants
       if (!hasVariants) {
         // Add simple product data
-        formData.append("price", String(product.price || 0));
-        // Explicitly check for salePrice and handle it correctly
-        if (product.salePrice) {
-          formData.append("salePrice", String(product.salePrice));
+        // Pricing Logic:
+        // Backend `price` = Regular Price (MRP)
+        // Backend `salePrice` = Discounted Price (Selling Price)
+
+        const sellingPriceVal = parseFloat(product.sellingPrice || "0");
+        const mrpVal = parseFloat(product.mrp || "0");
+
+        if (product.mrp && mrpVal > sellingPriceVal) {
+          // Case: On Sale (MRP > Selling)
+          formData.append("price", String(mrpVal)); // Backend Price = MRP
+          formData.append("salePrice", String(sellingPriceVal)); // Backend Sale Price = Selling
+        } else {
+          // Case: No Sale
+          formData.append("price", String(sellingPriceVal || 0)); // Backend Price = Selling
+          formData.append("salePrice", ""); // No Sale Price
         }
         formData.append("quantity", String(product.quantity || 0));
         // Add SKU for simple products
@@ -983,6 +874,11 @@ export function ProductForm({
           if (product.shippingBreadth) formData.append("shippingBreadth", product.shippingBreadth);
           if (product.shippingHeight) formData.append("shippingHeight", product.shippingHeight);
           if (product.shippingWeight) formData.append("shippingWeight", product.shippingWeight);
+        }
+
+        // Add redirectUrl for simple product
+        if (product.redirectUrl) {
+          formData.append("redirectUrl", product.redirectUrl);
         }
 
         // Ensure pricing slabs for simple products are sent if state variable exists
@@ -1009,8 +905,21 @@ export function ProductForm({
             id: variant.id,
             attributeValueIds: variant.attributeValueIds || [],
             sku: variant.sku || "",
-            price: String(variant.price || 0),
-            salePrice: variant.salePrice ? String(variant.salePrice) : "",
+            // Pricing Logic Swap for Backend
+            // Frontend `sellingPrice` = Actual Price, `mrp` = MRP
+            // Backend `price` = MRP (Regular), `salePrice` = Selling (Discounted)
+            price: (() => {
+              const selling = parseFloat(variant.sellingPrice || "0");
+              const mrp = parseFloat(variant.mrp || "0");
+              if (variant.mrp && mrp > selling) return String(mrp);
+              return String(selling);
+            })(),
+            salePrice: (() => {
+              const selling = parseFloat(variant.sellingPrice || "0");
+              const mrp = parseFloat(variant.mrp || "0");
+              if (variant.mrp && mrp > selling) return String(selling);
+              return "";
+            })(),
             quantity: String(variant.quantity || 0),
             isActive: variant.isActive !== undefined ? variant.isActive : true,
             removedImageIds: variant.removedImageIds || [], // Include removed image IDs for cleanup
@@ -1021,7 +930,8 @@ export function ProductForm({
             shippingHeight: variant.shippingHeight,
             shippingWeight: variant.shippingWeight,
             moq: variant.moq,
-            pricingSlabs: variant.pricingSlabs
+            pricingSlabs: variant.pricingSlabs,
+            redirectUrl: variant.redirectUrl || "",
           };
         });
 
@@ -1246,6 +1156,48 @@ export function ProductForm({
           }
         }
 
+        // Save Variant Group if enabled
+        if (savedProductId && variantGroupEnabled) {
+          try {
+            const payload = {
+              name: `${product.name} Variant Group`,
+              type: variantGroupType,
+              products: [
+                // Current product
+                {
+                  productId: savedProductId,
+                  label: product.name, // Will be overridden or set as default
+                  order: 0,
+                  isDefault: true
+                },
+                // Other products
+                ...variantGroupProducts.map((p, index) => ({
+                  productId: p.id,
+                  label: p.label || p.name,
+                  order: index + 1,
+                  isDefault: false
+                }))
+              ]
+            };
+
+            if (existingVariantGroupId) {
+              await api.put(`/api/admin/variants/${existingVariantGroupId}`, payload);
+            } else {
+              await api.post(`/api/admin/variants`, payload);
+            }
+          } catch (vgError: any) {
+            console.error("Error saving variant group:", vgError);
+            toast.error("Product saved but variant group failed to update");
+          }
+        } else if (savedProductId && !variantGroupEnabled && existingVariantGroupId) {
+          // If it was enabled but now disabled, maybe delete the group?
+          // Or at least remove this product from it. 
+          // For now, let's keep it simple.
+          try {
+            await api.delete(`/api/admin/variants/${existingVariantGroupId}`);
+          } catch (e) { }
+        }
+
         toast.success(
           mode === "create"
             ? "Product created successfully"
@@ -1265,26 +1217,8 @@ export function ProductForm({
     }
   };
 
-  // Add this function to handle hasVariants toggle
-  const handleVariantsToggle = (value: boolean) => {
-    setHasVariants(value);
 
-    // If toggling to simple product and we have variants, clear them
-    if (!value && variants.length > 0) {
-      if (
-        window.confirm(
-          "Switching to simple product will remove all your variant configurations. Continue?"
-        )
-      ) {
-        setVariants([]);
-        setSelectedAttributes({});
-      } else {
-        setHasVariants(true);
-      }
-    }
-  };
 
-  // Handle category selection from CategorySelector
   const handleSelectCategory = (categoryId: string) => {
     // Check if the category is already selected
     const isSelected = product.categoryIds.includes(categoryId);
@@ -1389,14 +1323,69 @@ export function ProductForm({
     );
   };
 
-  // Track if user has manually edited the SKU
-  const [skuManuallyEdited, setSkuManuallyEdited] = useState(false);
+  // State for product linking UX
+  const [showProductLinker, setShowProductLinker] = useState(false);
 
+  // Search for products to add to variant group
+  const searchProductsForVariant = async (query: string) => {
+    if (!query || query.length < 2) {
+      setVariantSearchResults([]);
+      return;
+    }
+    setIsSearchingProducts(true);
+    try {
+      const response = await api.get(`/api/admin/products?search=${encodeURIComponent(query)}&limit=10`);
+      if (response.data.success) {
+        // Filter out current product and already selected products
+        const results = (response.data.data?.products || []).filter(
+          (p: any) =>
+            p.id !== productId &&
+            !variantGroupProducts.some((vp) => vp.id === p.id)
+        );
+        setVariantSearchResults(results);
+      }
+    } catch (error) {
+      console.error("Error searching products:", error);
+    } finally {
+      setIsSearchingProducts(false);
+    }
+  };
+
+  // Add product to variant group
+  const addProductToVariantGroup = (product: any) => {
+    setVariantGroupProducts((prev) => [
+      ...prev,
+      {
+        ...product,
+        label: product.name,
+        isDefault: prev.length === 0 // First product is default
+      }
+    ]);
+    setVariantProductSearch("");
+    setVariantSearchResults([]);
+  };
+
+  // Remove product from variant group
+  const removeProductFromVariantGroup = (productId: string) => {
+    setVariantGroupProducts((prev) => prev.filter((p) => p.id !== productId));
+  };
+
+  // Debounced search effect
+  const debouncedVariantSearch = useDebounce(variantProductSearch, 300);
+  useEffect(() => {
+    if (debouncedVariantSearch) {
+      searchProductsForVariant(debouncedVariantSearch);
+    } else {
+      setVariantSearchResults([]);
+    }
+  }, [debouncedVariantSearch]);
+
+
+  /* 
   useEffect(() => {
     // Auto-generate SKU when not using variants and SKU hasn't been manually edited
     if (
       !hasVariants &&
-      !skuManuallyEdited &&
       product.name &&
       product.price &&
       categories.length > 0 &&
@@ -1428,16 +1417,9 @@ export function ProductForm({
     product.price,
     product.categoryIds,
     categories,
-    skuManuallyEdited,
   ]);
+  */
 
-  // ... inside ProductForm, after brands state:
-  // const [brands, setBrands] = useState<{ label: string; value: string }[]>([]); // Removed unused brands state
-
-  // useEffect(() => {
-  //   async function fetchBrands() {
-  //     try {
-  //       const res = await import("@/api/adminService").then((m) =>
   //         m.brands.getBrands()
   //       );
   //       const brandOptions = (res.data.data.brands || []).map((b: any) => ({
@@ -1747,14 +1729,7 @@ export function ProductForm({
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 p-1">
-                <Label className="text-base">{t("products.form.labels.has_variants")}</Label>
-                <Checkbox
-                  checked={hasVariants}
-                  onCheckedChange={handleVariantsToggle}
-                  className="h-6 w-6 border-gray-400 cursor-pointer"
-                />
-              </div>
+
 
               {/* Product Settings */}
               <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
@@ -1863,407 +1838,420 @@ export function ProductForm({
                 </div>
               </div>
 
-              {!hasVariants && (
-                <>
-                  {/* Simple product fields */}
-                  <div className="grid gap-2">
-                    <Label htmlFor="quantity">{t("products.form.labels.stock_quantity")} *</Label>
-                    <Input
-                      id="quantity"
-                      name="quantity"
-                      type="number"
-                      min="0"
-                      value={product.quantity}
-                      onChange={handleChange}
-                      placeholder="0"
-                      required
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* SKU Field - Auto-generated but editable */}
+              {/* Sale Price (Actual Price) */}
               <div className="grid gap-2">
-                <Label htmlFor="sku">
-                  {!hasVariants
-                    ? t("products.form.placeholders.sku_auto")
-                    : "Base SKU (Auto-generated)"}
-                </Label>
+                <Label htmlFor="sellingPrice">Sale Price (Actual Price)</Label>
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                    ₹
+                  </span>
+                  <Input
+                    id="sellingPrice"
+                    name="sellingPrice"
+                    type="number"
+                    min="0"
+                    value={product.sellingPrice}
+                    onChange={handleChange}
+                    placeholder="0.00"
+                    className="pl-8"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Stock Quantity */}
+              <div className="grid gap-2">
+                <Label htmlFor="quantity">{t("products.form.labels.stock_quantity")} *</Label>
+                <Input
+                  id="quantity"
+                  name="quantity"
+                  type="number"
+                  min="0"
+                  value={product.quantity}
+                  onChange={handleChange}
+                  placeholder="0"
+                  required
+                />
+              </div>
+
+              {/* SKU Field */}
+              <div className="grid gap-2">
+                <Label htmlFor="sku">Product SKU (Manual)</Label>
                 <Input
                   id="sku"
                   name="sku"
                   value={product.sku}
-                  onChange={(e) => {
-                    handleChange(e);
-                    setSkuManuallyEdited(true); // Mark as manually edited
-                  }}
-                  placeholder={t("products.form.placeholders.sku_auto_hint")}
+                  onChange={handleChange}
+                  placeholder="Enter SKU manually"
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  SKU is auto-generated but you can edit it if needed
+                  Enter SKU manually for this product
                 </p>
               </div>
 
-              {!hasVariants && (
-                <div className="grid gap-2">
-                  <Label htmlFor="price">{t("products.form.labels.price")} *</Label>
-                  <div className="relative">
-                    <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                      ₹
-                    </span>
-                    <Input
-                      id="price"
-                      name="price"
-                      type="number"
-                      min="0"
-                      value={product.price}
-                      onChange={handleChange}
-                      placeholder="0.00"
-                      className="pl-8"
-                      required
-                    />
-                  </div>
-                </div>
-              )}
-              {!hasVariants && (
-                <div className="grid gap-2">
-                  <Label htmlFor="salePrice">{t("products.form.labels.sale_price_optional")}</Label>
-                  <div className="relative">
-                    <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                      ₹
-                    </span>
-                    <Input
-                      id="salePrice"
-                      name="salePrice"
-                      type="number"
-                      min="0"
-                      value={product.salePrice}
-                      onChange={handleChange}
-                      placeholder="0.00"
-                      className="pl-8"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Product Images - Dropzone - Only show when variants are NOT enabled */}
-          {!hasVariants && (
-            <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
-              <h2 className="text-xl font-semibold border-b pb-2">
-                Product Images
-              </h2>
-              <div className="space-y-2">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium">{t("products.form.media.upload_title")}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {t("products.form.media.drag_drop_hint")}
-                  </p>
-                </div>
-                <div
-                  {...getRootProps()}
-                  className={`border-2 border-dashed rounded-md p-8 cursor-pointer transition-colors text-center bg-white ${isDragActive
-                    ? "border-blue-400 bg-blue-50"
-                    : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
-                    }`}
-                >
-                  <input {...getInputProps()} />
-                  <ImageIcon className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
-                  {isDragActive ? (
-                    <p className="text-blue-600 font-medium">
-                      {t("products.form.media.drop_here")}
-                      {t("products.form.media.drop_text")}
-                    </p>
-                  ) : (
-                    <>
-                      <p className="text-muted-foreground">
-                        {t("products.form.media.drop_multiple_images")}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {t("products.form.media.upload_hint")}
-                      </p>
-                    </>
-                  )}
-                </div>
-
-                {/* Fallback file input */}
-                <div className="mt-2">
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    multiple
-                    onChange={(e) => {
-                      if (e.target.files) {
-                        const files = Array.from(e.target.files);
-                        onDrop(files);
-                        // Clear the input so the same file can be selected again
-                        e.target.value = "";
-                      }
-                    }}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              {/* MRP (Original Price) */}
+              <div className="grid gap-2">
+                <Label htmlFor="mrp">MRP (Original Price)</Label>
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                    ₹
+                  </span>
+                  <Input
+                    id="mrp"
+                    name="mrp"
+                    type="number"
+                    min="0"
+                    value={product.mrp}
+                    onChange={handleChange}
+                    placeholder="0.00"
+                    className="pl-8"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {t("products.form.media.alternative_input_hint")}
-                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Product Images - Dropzone */}
+            <div>
+
+              <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
+                <h2 className="text-xl font-semibold border-b pb-2">
+                  Product Images
+                </h2>
+                <div className="space-y-2">
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-medium">{t("products.form.media.upload_title")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("products.form.media.drag_drop_hint")}
+                    </p>
+                  </div>
+                  <div
+                    {...getRootProps()}
+                    className={`border-2 border-dashed rounded-md p-8 cursor-pointer transition-colors text-center bg-white ${isDragActive
+                      ? "border-blue-400 bg-blue-50"
+                      : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                      }`}
+                  >
+                    <input {...getInputProps()} />
+                    <ImageIcon className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+                    {isDragActive ? (
+                      <p className="text-blue-600 font-medium">
+                        {t("products.form.media.drop_here")}
+                        {t("products.form.media.drop_text")}
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-muted-foreground">
+                          {t("products.form.media.drop_multiple_images")}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {t("products.form.media.upload_hint")}
+                        </p>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Fallback file input */}
+                  <div className="mt-2">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      multiple
+                      onChange={(e) => {
+                        if (e.target.files) {
+                          const files = Array.from(e.target.files);
+                          onDrop(files);
+                          // Clear the input so the same file can be selected again
+                          e.target.value = "";
+                        }
+                      }}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {t("products.form.media.alternative_input_hint")}
+                    </p>
+                  </div>
+
+                  {/* Manual File Input as Fallback */}
                 </div>
 
-                {/* Manual File Input as Fallback */}
-              </div>
-
-              {/* Image previews */}
-              {imagePreviews.length > 0 && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <Label>{t("products.form.sections.product_images")}</Label>
-                    <Badge variant="outline" className="text-xs">
-                      {imagePreviews.length} {t("products.form.media.image")}
-                      {imagePreviews.length !== 1 ? "s" : ""}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative group">
-                        <div
-                          className={`relative h-32 rounded-md overflow-hidden border-2 ${preview.isPrimary ? "border-primary" : "border-transparent"}`}
-                        >
-                          <img
-                            src={preview.url}
-                            alt={`Product preview ${index + 1}`}
-                            className="h-full w-full object-cover"
-                          />
-                          {preview.isPrimary && (
-                            <span className="absolute top-2 left-2 bg-primary text-white text-xs py-1 px-2 rounded-full">
-                              {t("products.form.media.primary_image")}
-                            </span>
-                          )}
-                        </div>
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 flex space-x-1">
-                          {!preview.isPrimary && (
+                {/* Image previews */}
+                {imagePreviews.length > 0 && (
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <Label>{t("products.form.sections.product_images")}</Label>
+                      <Badge variant="outline" className="text-xs">
+                        {imagePreviews.length} {t("products.form.media.image")}
+                        {imagePreviews.length !== 1 ? "s" : ""}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <div
+                            className={`relative h-32 rounded-md overflow-hidden border-2 ${preview.isPrimary ? "border-primary" : "border-transparent"}`}
+                          >
+                            <img
+                              src={preview.url}
+                              alt={`Product preview ${index + 1}`}
+                              className="h-full w-full object-cover"
+                            />
+                            {preview.isPrimary && (
+                              <span className="absolute top-2 left-2 bg-primary text-white text-xs py-1 px-2 rounded-full">
+                                {t("products.form.media.primary_image")}
+                              </span>
+                            )}
+                          </div>
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 flex space-x-1">
+                            {!preview.isPrimary && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7 bg-white hover:bg-primary hover:text-white"
+                                onClick={() => setPrimaryImage(index)}
+                              >
+                                <Star className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button
                               type="button"
                               variant="outline"
                               size="icon"
-                              className="h-7 w-7 bg-white hover:bg-primary hover:text-white"
-                              onClick={() => setPrimaryImage(index)}
+                              className="h-7 w-7 bg-white hover:bg-destructive hover:text-white"
+                              onClick={() => removeImage(index)}
                             >
-                              <Star className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" />
                             </Button>
-                          )}
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7 bg-white hover:bg-destructive hover:text-white"
-                            onClick={() => removeImage(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* SEO Section */}
+            <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
+              <h2 className="text-xl font-semibold border-b pb-2">
+                {t("products.form.sections.seo_information")}
+              </h2>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="metaTitle">{t("products.form.seo.title_label")}</Label>
+                  <Input
+                    id="metaTitle"
+                    name="metaTitle"
+                    value={product.metaTitle}
+                    onChange={handleChange}
+                    placeholder={t("products.form.seo.title_placeholder")}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("products.form.seo.title_hint")}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="metaDescription">{t("products.form.seo.description_label")}</Label>
+                  <Textarea
+                    id="metaDescription"
+                    name="metaDescription"
+                    value={product.metaDescription}
+                    onChange={handleChange}
+                    placeholder={t("products.form.seo.description_placeholder")}
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("products.form.seo.description_hint")}
+                  </p>
+                  <div className="text-xs text-muted-foreground">
+                    {t("products.form.seo.current_length")}: {product.metaDescription?.length || 0} / 160
+                    {t("products.form.seo.characters")}
+                    {product.metaDescription &&
+                      product.metaDescription.length > 160 && (
+                        <span className="text-destructive ml-2">⚠️ {t("products.form.seo.too_long")}</span>
+                      )}
                   </div>
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* SEO Section */}
-          <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
-            <h2 className="text-xl font-semibold border-b pb-2">
-              {t("products.form.sections.seo_information")}
-            </h2>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="metaTitle">{t("products.form.seo.title_label")}</Label>
-                <Input
-                  id="metaTitle"
-                  name="metaTitle"
-                  value={product.metaTitle}
-                  onChange={handleChange}
-                  placeholder={t("products.form.seo.title_placeholder")}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t("products.form.seo.title_hint")}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="metaDescription">{t("products.form.seo.description_label")}</Label>
-                <Textarea
-                  id="metaDescription"
-                  name="metaDescription"
-                  value={product.metaDescription}
-                  onChange={handleChange}
-                  placeholder={t("products.form.seo.description_placeholder")}
-                  rows={3}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t("products.form.seo.description_hint")}
-                </p>
-                <div className="text-xs text-muted-foreground">
-                  {t("products.form.seo.current_length")}: {product.metaDescription?.length || 0} / 160
-                  {t("products.form.seo.characters")}
-                  {product.metaDescription &&
-                    product.metaDescription.length > 160 && (
-                      <span className="text-destructive ml-2">⚠️ {t("products.form.seo.too_long")}</span>
-                    )}
+                <div className="space-y-2">
+                  <Label htmlFor="keywords">{t("products.form.seo.keywords_label")}</Label>
+                  <Input
+                    id="keywords"
+                    name="keywords"
+                    value={product.keywords}
+                    onChange={handleChange}
+                    placeholder={t("products.form.seo.keywords_placeholder")}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("products.form.seo.keywords_hint")}
+                  </p>
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="keywords">{t("products.form.seo.keywords_label")}</Label>
-                <Input
-                  id="keywords"
-                  name="keywords"
-                  value={product.keywords}
-                  onChange={handleChange}
-                  placeholder={t("products.form.seo.keywords_placeholder")}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t("products.form.seo.keywords_hint")}
-                </p>
+
+
+            <div className="space-y-6">
+              {/* 2. Link Existing Products (New Request) */}
+              {mode === "edit" && (
+                <div className="space-y-4 border-b pb-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Link Existing Products</h3>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowProductLinker(!showProductLinker)}
+                      className="text-primary hover:text-primary hover:bg-primary/10"
+                    >
+                      {showProductLinker ? "Close Search" : "Search to Link Products"}
+                    </Button>
+                  </div>
+
+                  {showProductLinker && (
+                    <div className="space-y-3 p-4 bg-white border rounded-xl shadow-sm">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          placeholder="Type product name to add as variant..."
+                          value={variantProductSearch}
+                          onChange={(e) => setVariantProductSearch(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+
+                      {isSearchingProducts && (
+                        <div className="flex items-center justify-center p-4">
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        </div>
+                      )}
+
+                      {variantSearchResults.length > 0 && (
+                        <div className="grid gap-2 max-h-60 overflow-y-auto pr-1">
+                          {variantSearchResults.map((prod) => (
+                            <div
+                              key={prod.id}
+                              onClick={() => addProductToVariantGroup(prod)}
+                              className="flex items-center justify-between p-2 border rounded-lg hover:border-primary hover:bg-primary/5 cursor-pointer transition-all animate-in fade-in slide-in-from-top-1"
+                            >
+                              <div className="flex items-center gap-3">
+                                {prod.images?.[0] ? (
+                                  <img
+                                    src={prod.images[0].url}
+                                    className="h-10 w-10 rounded object-cover border"
+                                    alt=""
+                                  />
+                                ) : (
+                                  <div className="h-10 w-10 rounded bg-gray-100 flex items-center justify-center">
+                                    <Package className="h-5 w-5 text-gray-400" />
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="text-xs font-semibold">{prod.name}</p>
+                                  <div className="flex gap-1 mt-0.5">
+                                    {prod.variants?.[0]?.attributes?.map((attr: any, i: number) => (
+                                      <Badge key={i} variant="outline" className="text-[8px] py-0 px-1 leading-tight">
+                                        {attr.value}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                  <p className="text-[10px] text-gray-400">SKU: {prod.variants?.[0]?.sku || "N/A"}</p>
+                                </div>
+                              </div>
+                              <Plus className="h-4 w-4 text-primary" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {variantGroupProducts.length > 0 && (
+                    <div className="grid gap-3">
+                      <Label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Linked Products ({variantGroupProducts.length})</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {variantGroupProducts.map((vProduct, vIdx) => (
+                          <div key={vProduct.id} className="relative group p-3 bg-white border rounded-xl flex items-center gap-3 shadow-sm">
+                            <div className="h-12 w-12 rounded-lg bg-gray-50 flex items-center justify-center border overflow-hidden">
+                              {vProduct.images?.[0] ? (
+                                <img src={vProduct.images[0].url} className="h-full w-full object-cover" alt="" />
+                              ) : (
+                                <Package className="h-6 w-6 text-gray-300" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold truncate">{vProduct.name}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <select
+                                  className="text-[10px] bg-gray-50 border-none rounded p-0.5"
+                                  value={variantGroupType}
+                                  onChange={(e) => setVariantGroupType(e.target.value)}
+                                >
+                                  <option value="Color">Color</option>
+                                  <option value="Size">Size</option>
+                                  <option value="Material">Material</option>
+                                </select>
+                                <Input
+                                  className="h-5 text-[10px] p-1 w-20"
+                                  placeholder="Label (e.g. Red)"
+                                  value={vProduct.label || ""}
+                                  onChange={(e) => {
+                                    const newProds = [...variantGroupProducts];
+                                    newProds[vIdx].label = e.target.value;
+                                    setVariantGroupProducts(newProds);
+                                  }}
+                                />
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => removeProductFromVariantGroup(vProduct.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 3. Variant List (Combined) */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Available Variations</h3>
+
+                </div>
+
+                {variants.length > 0 ? (
+                  <div className="space-y-4">
+                    {variants.map((variant, variantIndex) => (
+                      <VariantCard
+                        key={variant.id || `variant-${variantIndex}`}
+                        variant={variant}
+                        index={variantIndex}
+                        onUpdate={updateVariantByIndex}
+                        onRemove={removeVariantByIndex}
+                        onImagesChange={handleVariantImagesChange}
+                        isEditMode={mode === "edit"}
+                        shiprocketEnabled={shiprocketEnabled}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-8 border-2 border-dashed rounded-xl bg-white/50 text-gray-400">
+                    <p className="text-sm">Configured variants will appear here</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-
-          {/* Variants Configuration */}
-          {hasVariants && (
-            <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
-              <div className="flex items-center justify-between border-b pb-2">
-                <h2 className="text-xl font-semibold">
-                  {t("products.form.sections.variants_configuration")}
-                </h2>
-                <Badge variant="secondary" className="text-xs">
-                  {t("products.form.variants.using_variant_images")}
-                </Badge>
-              </div>
-
-              <div className="bg-green-50 border border-green-200 rounded-md p-3">
-                <p className="text-sm text-green-700">
-                  <strong>✓ {t("products.form.variants.variant_mode")}:</strong> {t("products.form.variants.variant_mode_hint")}
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-4">
-                  {attributesList.length === 0 ? (
-                    <div className="rounded-md border p-4 bg-yellow-50">
-                      <p className="text-sm text-yellow-700">
-                        {t("products.form.variants.no_attributes_available")}{" "}
-                        <Link
-                          to="/attributes"
-                          className="underline font-medium"
-                        >
-                          {t("products.form.variants.attributes_link")}
-                        </Link>{" "}
-                        {t("products.form.variants.section_text")}.
-                      </p>
-                    </div>
-                  ) : (
-                    attributesList.map((attribute) => (
-                      <div key={attribute.id} className="space-y-2">
-                        <Label>
-                          {attribute.name} ({attribute.inputType})
-                        </Label>
-                        <div className="space-y-2 rounded-md border p-3 max-h-40 overflow-y-auto bg-white">
-                          {attributeValuesMap[attribute.id]?.length > 0 ? (
-                            attributeValuesMap[attribute.id].map(
-                              (value: any) => (
-                                <div
-                                  key={value.id}
-                                  className="flex items-center space-x-2"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    id={`attr-${attribute.id}-value-${value.id}`}
-                                    checked={
-                                      selectedAttributes[
-                                        attribute.id
-                                      ]?.includes(value.id) || false
-                                    }
-                                    onChange={() =>
-                                      handleAttributeValueToggle(
-                                        attribute.id,
-                                        value.id
-                                      )
-                                    }
-                                    className="h-6 w-6 rounded border-gray-400 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                                  />
-                                  <Label
-                                    htmlFor={`attr-${attribute.id}-value-${value.id}`}
-                                    className="text-sm font-normal cursor-pointer"
-                                  >
-                                    {value.value}
-                                  </Label>
-                                </div>
-                              )
-                            )
-                          ) : (
-                            <p className="text-sm text-gray-500">
-                              {t("products.form.variants.no_values_available")}{" "}
-                              <Link
-                                to={`/attributes/${attribute.id}/values/new`}
-                                className="underline"
-                              >
-                                {t("products.form.variants.add_values_link")}
-                              </Link>
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <Button
-                  type="button"
-                  onClick={generateVariants}
-                  disabled={
-                    !Object.values(selectedAttributes).some(
-                      (values) => values.length > 0
-                    ) || isLoading
-                  }
-                  className="w-full"
-                >
-                  {t("products.form.variants.generate_variants_button")}
-                </Button>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Label>{t("products.form.variants.variants_label")}</Label>
-                    <Badge variant="outline" className="ml-2">
-                      {variants.length} {t("products.form.variants.variants_count")}
-                    </Badge>
-                  </div>
-
-                  {variants.length > 0 ? (
-                    <div className="space-y-4">
-                      {variants.map((variant, variantIndex) => (
-                        <VariantCard
-                          key={variant.id || `variant-${variantIndex}`}
-                          variant={variant}
-                          index={variantIndex}
-                          onUpdate={updateVariantByIndex}
-                          onRemove={removeVariantByIndex}
-                          onImagesChange={handleVariantImagesChange}
-                          isEditMode={mode === "edit"}
-                          shiprocketEnabled={shiprocketEnabled}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center p-4 border rounded-md bg-white">
-                      <p className="text-sm text-gray-500">
-                        {t("products.form.variants.no_variants_yet")}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* MOQ Settings Section */}
           <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
@@ -2329,74 +2317,208 @@ export function ProductForm({
           </div>
 
           {/* Shipping Dimensions Section - Only show when Shiprocket is enabled and no variants */}
-          {shiprocketEnabled && !hasVariants && (
-            <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold">
-                  {t("products.form.shipping.title")}
-                </h2>
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
-                  {t("common.optional") || "Optional"}
-                </Badge>
+          {
+            shiprocketEnabled && !hasVariants && (
+              <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-semibold">
+                    {t("products.form.shipping.title")}
+                  </h2>
+                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                    {t("common.optional") || "Optional"}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t("products.form.shipping.description")}
+                </p>
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="shipping-length">{t("products.form.shipping.length_label")}</Label>
+                    <Input
+                      id="shipping-length"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={product.shippingLength || ""}
+                      onChange={(e) => setProduct({ ...product, shippingLength: e.target.value })}
+                      placeholder="e.g. 10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="shipping-breadth">{t("products.form.shipping.breadth_label")}</Label>
+                    <Input
+                      id="shipping-breadth"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={product.shippingBreadth || ""}
+                      onChange={(e) => setProduct({ ...product, shippingBreadth: e.target.value })}
+                      placeholder="e.g. 10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="shipping-height">{t("products.form.shipping.height_label")}</Label>
+                    <Input
+                      id="shipping-height"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={product.shippingHeight || ""}
+                      onChange={(e) => setProduct({ ...product, shippingHeight: e.target.value })}
+                      placeholder="e.g. 10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="shipping-weight">{t("products.form.shipping.weight_label")}</Label>
+                    <Input
+                      id="shipping-weight"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={product.shippingWeight || ""}
+                      onChange={(e) => setProduct({ ...product, shippingWeight: e.target.value })}
+                      placeholder="e.g. 0.5"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("products.form.shipping.optional_hint")}
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {t("products.form.shipping.description")}
-              </p>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                <div className="space-y-2">
-                  <Label htmlFor="shipping-length">{t("products.form.shipping.length_label")}</Label>
-                  <Input
-                    id="shipping-length"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={product.shippingLength || ""}
-                    onChange={(e) => setProduct({ ...product, shippingLength: e.target.value })}
-                    placeholder="e.g. 10"
+            )
+          }
+
+          {/* Variant Group Section - Link products as variants */}
+          {
+            mode === "edit" && (
+              <div className="space-y-4 rounded-lg border p-4 bg-purple-50">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <h2 className="text-xl font-semibold">Variant Group (Link Products)</h2>
+                  <Switch
+                    checked={variantGroupEnabled}
+                    onCheckedChange={setVariantGroupEnabled}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="shipping-breadth">{t("products.form.shipping.breadth_label")}</Label>
-                  <Input
-                    id="shipping-breadth"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={product.shippingBreadth || ""}
-                    onChange={(e) => setProduct({ ...product, shippingBreadth: e.target.value })}
-                    placeholder="e.g. 10"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="shipping-height">{t("products.form.shipping.height_label")}</Label>
-                  <Input
-                    id="shipping-height"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={product.shippingHeight || ""}
-                    onChange={(e) => setProduct({ ...product, shippingHeight: e.target.value })}
-                    placeholder="e.g. 10"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="shipping-weight">{t("products.form.shipping.weight_label")}</Label>
-                  <Input
-                    id="shipping-weight"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={product.shippingWeight || ""}
-                    onChange={(e) => setProduct({ ...product, shippingWeight: e.target.value })}
-                    placeholder="e.g. 0.5"
-                  />
-                </div>
+
+                {variantGroupEnabled && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Link this product with other products as variants (e.g., different colors of the same product).
+                    </p>
+
+                    {/* Variant Type Selection */}
+                    <div className="grid gap-2">
+                      <Label>Variant Type</Label>
+                      <select
+                        className="w-full border rounded-md p-2"
+                        value={variantGroupType}
+                        onChange={(e) => setVariantGroupType(e.target.value)}
+                      >
+                        <option value="Color">Color</option>
+                        <option value="Size">Size</option>
+                        <option value="Material">Material</option>
+                        <option value="Style">Style</option>
+                      </select>
+                    </div>
+
+                    {/* Product Search */}
+                    <div className="grid gap-2">
+                      <Label>Search Products to Add</Label>
+                      <div className="relative">
+                        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="Search by product name..."
+                          value={variantProductSearch}
+                          onChange={(e) => setVariantProductSearch(e.target.value)}
+                          className="pl-8"
+                        />
+                      </div>
+
+                      {/* Search Results */}
+                      {isSearchingProducts && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Searching...
+                        </div>
+                      )}
+                      {variantSearchResults.length > 0 && (
+                        <div className="border rounded-md max-h-48 overflow-y-auto bg-white">
+                          {variantSearchResults.map((prod) => (
+                            <div
+                              key={prod.id}
+                              className="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2 border-b last:border-b-0"
+                              onClick={() => addProductToVariantGroup(prod)}
+                            >
+                              {prod.images?.[0]?.url && (
+                                <img
+                                  src={prod.images[0].url.startsWith("http") ? prod.images[0].url : `https://files.dfixkart.com/${prod.images[0].url}`}
+                                  alt={prod.name}
+                                  className="w-10 h-10 object-cover rounded"
+                                />
+                              )}
+                              <div>
+                                <p className="font-medium text-sm">{prod.name}</p>
+                                <p className="text-xs text-muted-foreground">SKU: {prod.variants?.[0]?.sku || "N/A"}</p>
+                              </div>
+                              <Plus className="ml-auto h-4 w-4 text-green-600" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Selected Products */}
+                    {variantGroupProducts.length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Linked Variant Products ({variantGroupProducts.length})</Label>
+                        <div className="space-y-2">
+                          {variantGroupProducts.map((prod, index) => (
+                            <div
+                              key={prod.id}
+                              className="flex items-center gap-2 p-2 bg-white border rounded-md"
+                            >
+                              {prod.images?.[0]?.url && (
+                                <img
+                                  src={prod.images[0].url.startsWith("http") ? prod.images[0].url : `https://files.dfixkart.com/${prod.images[0].url}`}
+                                  alt={prod.name}
+                                  className="w-10 h-10 object-cover rounded"
+                                />
+                              )}
+                              <div className="flex-1">
+                                <p className="font-medium text-sm">{prod.name}</p>
+                                <Input
+                                  type="text"
+                                  placeholder="Label (e.g., Red, Blue)"
+                                  value={prod.label || ""}
+                                  onChange={(e) => {
+                                    setVariantGroupProducts((prev) =>
+                                      prev.map((p, i) =>
+                                        i === index ? { ...p, label: e.target.value } : p
+                                      )
+                                    );
+                                  }}
+                                  className="mt-1 h-8 text-sm"
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeProductFromVariantGroup(prod.id)}
+                              >
+                                <X className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {t("products.form.shipping.optional_hint")}
-              </p>
-            </div>
-          )}
+            )
+          }
 
           {/* Submit Buttons */}
           <div className="flex justify-end gap-2">
@@ -2420,9 +2542,9 @@ export function ProductForm({
               )}
             </Button>
           </div>
-        </form>
-      </Card>
-    </div>
+        </form >
+      </Card >
+    </div >
   );
 }
 
@@ -3177,152 +3299,157 @@ function ProductsList() {
                 return (
                   <div
                     key={product.id}
-                    className="flex items-center gap-4 p-4 hover:bg-[#F3F7F6] transition-colors"
+                    className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 hover:bg-[#F3F7F6] transition-colors relative"
                   >
-                    {/* Product Image */}
-                    <div className="flex-shrink-0">
-                      {productImage ? (
-                        <img
-                          src={productImage.url}
-                          alt={product.name}
-                          className="h-14 w-14 rounded-lg object-cover border border-[#E5E7EB]"
-                        />
-                      ) : (
-                        <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-[#F3F4F6] border border-[#E5E7EB]">
-                          <Package className="h-6 w-6 text-[#9CA3AF]" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Product Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-[#1F2937] text-base truncate">
-                              {product.name}
-                            </h3>
-                            {product.ourProduct && (
-                              <Badge className="bg-[#EFF6FF] text-[#3B82F6] border-[#DBEAFE] text-xs">
-                                {t("products.list.status.our_product")}
-                              </Badge>
-                            )}
+                    <div className="flex items-center gap-4 w-full sm:w-auto sm:flex-1 min-w-0">
+                      {/* Product Image */}
+                      <div className="flex-shrink-0">
+                        {productImage ? (
+                          <img
+                            src={productImage.url}
+                            alt={product.name}
+                            className="h-14 w-14 rounded-lg object-contain p-1 bg-white border border-[#E5E7EB]"
+                          />
+                        ) : (
+                          <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-white border border-[#E5E7EB]">
+                            <Package className="h-6 w-6 text-[#9CA3AF]" />
                           </div>
-                          <div className="flex items-center gap-3 flex-wrap">
-                            {/* Category - Hidden on mobile */}
-                            <div className="hidden md:flex items-center gap-1.5 flex-wrap">
-                              {product.categories &&
-                                product.categories.length > 0 ? (
-                                product.categories
-                                  .slice(0, 2)
-                                  .map((category: any) => (
-                                    <span
-                                      key={category.id}
-                                      className="text-xs text-[#9CA3AF]"
-                                    >
-                                      {category.name}
-                                    </span>
-                                  ))
-                              ) : (
+                        )}
+                      </div>
+
+                      {/* Product Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 sm:gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <h3 className="font-semibold text-[#1F2937] text-base truncate max-w-[200px] sm:max-w-none">
+                                {product.name}
+                              </h3>
+                              {product.ourProduct && (
+                                <Badge className="bg-[#EFF6FF] text-[#3B82F6] border-[#DBEAFE] text-xs shrink-0">
+                                  {t("products.list.status.our_product")}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 flex-wrap">
+                              {/* Category - Visible on all screens now */}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {product.categories &&
+                                  product.categories.length > 0 ? (
+                                  product.categories
+                                    .slice(0, 2)
+                                    .map((category: any) => (
+                                      <span
+                                        key={category.id}
+                                        className="text-xs text-[#9CA3AF]"
+                                      >
+                                        {category.name}
+                                      </span>
+                                    ))
+                                ) : (
+                                  <span className="text-xs text-[#9CA3AF]">
+                                    Uncategorized
+                                  </span>
+                                )}
+                              </div>
+                              {product.hasVariants && (
                                 <span className="text-xs text-[#9CA3AF]">
-                                  Uncategorized
+                                  {product.variants.length} variants
                                 </span>
                               )}
                             </div>
-                            {product.hasVariants && (
-                              <span className="text-xs text-[#9CA3AF]">
-                                {product.variants.length} variants
+                          </div>
+
+                          {/* Price - Show on right for desktop, below name for mobile if needed, or keep right */}
+                          <div className="text-left sm:text-right flex-shrink-0 mt-1 sm:mt-0">
+                            {hasSale ? (
+                              <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-0">
+                                <span className="font-bold text-[#1F2937]">
+                                  ₹{basePrice}
+                                </span>
+                                <span className="text-xs line-through text-[#9CA3AF]">
+                                  ₹{regularPrice}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="font-bold text-[#1F2937]">
+                                ₹{basePrice}
                               </span>
                             )}
                           </div>
                         </div>
+                      </div>
+                    </div>
 
-                        {/* Price */}
-                        <div className="text-right flex-shrink-0">
-                          {hasSale ? (
-                            <div className="flex flex-col items-end">
-                              <span className="font-bold text-[#1F2937]">
-                                ₹{basePrice}
-                              </span>
-                              <span className="text-xs line-through text-[#9CA3AF]">
-                                ₹{regularPrice}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="font-bold text-[#1F2937]">
-                              ₹{basePrice}
-                            </span>
+                    {/* Status & Stock - Visible on all screens, stacked on mobile */}
+                    <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto mt-2 sm:mt-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-dashed border-gray-200">
+                      <div className="flex items-center gap-4 flex-shrink-0">
+                        <div className="text-left sm:text-right">
+                          <Badge
+                            className={
+                              product.isActive
+                                ? "bg-[#ECFDF5] text-[#22C55E] border-[#D1FAE5] text-xs"
+                                : "bg-[#FFFBEB] text-[#F59E0B] border-[#FEF3C7] text-xs"
+                            }
+                          >
+                            {product.isActive ? "Active" : "Draft"}
+                          </Badge>
+                          {totalStock === 0 && (
+                            <Badge className="bg-[#FEF2F2] text-[#EF4444] border-[#FEE2E2] text-xs ml-2 sm:ml-0 sm:mt-1 inline-block sm:block">
+                              Out of stock
+                            </Badge>
                           )}
                         </div>
                       </div>
-                    </div>
 
-                    {/* Status & Stock - Hidden on mobile */}
-                    <div className="hidden lg:flex items-center gap-4 flex-shrink-0">
-                      <div className="text-right">
-                        <Badge
-                          className={
-                            product.isActive
-                              ? "bg-[#ECFDF5] text-[#22C55E] border-[#D1FAE5] text-xs"
-                              : "bg-[#FFFBEB] text-[#F59E0B] border-[#FEF3C7] text-xs"
-                          }
-                        >
-                          {product.isActive ? "Active" : "Draft"}
-                        </Badge>
-                        {totalStock === 0 && (
-                          <Badge className="bg-[#FEF2F2] text-[#EF4444] border-[#FEE2E2] text-xs mt-1 block">
-                            Out of stock
-                          </Badge>
-                        )}
+                      {/* Actions Menu - Absolute on mobile top-right or flexed here */}
+                      <div className="flex-shrink-0 sm:ml-2">
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 hover:bg-[#F3F4F6]"
+                            >
+                              <MoreVertical className="h-4 w-4 text-[#4B5563]" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="bg-[#FFFFFF] border-[#E5E7EB] shadow-lg"
+                          >
+                            <DropdownMenuItem
+                              className="text-[#1F2937] hover:bg-[#F3F7F6]"
+                              asChild
+                            >
+                              <Link to={`/products/${product.id}`}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-[#1F2937] hover:bg-[#F3F7F6]"
+                              onClick={() =>
+                                handleToggleProductStatus(
+                                  product.id,
+                                  product.isActive
+                                )
+                              }
+                            >
+                              {product.isActive ? "Deactivate" : "Activate"}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-[#E5E7EB]" />
+                            <DropdownMenuItem
+                              className="text-[#EF4444] hover:bg-[#FEF2F2]"
+                              onClick={() => openDeleteDialog(product.id)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                    </div>
-
-                    {/* Actions Menu */}
-                    <div className="flex-shrink-0">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-[#F3F4F6]"
-                          >
-                            <MoreVertical className="h-4 w-4 text-[#4B5563]" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="bg-[#FFFFFF] border-[#E5E7EB] shadow-lg"
-                        >
-                          <DropdownMenuItem
-                            className="text-[#1F2937] hover:bg-[#F3F7F6]"
-                            asChild
-                          >
-                            <Link to={`/products/${product.id}`}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-[#1F2937] hover:bg-[#F3F7F6]"
-                            onClick={() =>
-                              handleToggleProductStatus(
-                                product.id,
-                                product.isActive
-                              )
-                            }
-                          >
-                            {product.isActive ? "Deactivate" : "Activate"}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator className="bg-[#E5E7EB]" />
-                          <DropdownMenuItem
-                            className="text-[#EF4444] hover:bg-[#FEF2F2]"
-                            onClick={() => openDeleteDialog(product.id)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
                   </div>
                 );

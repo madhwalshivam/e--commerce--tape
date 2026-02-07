@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { fetchApi } from "@/lib/utils";
 import { AlertCircle, ChevronDown, ChevronLeft, Grid, List, Volume2 } from "lucide-react";
-import { ProductCard } from "@/components/products/ProductCard";
+import { ProductCard } from "@/components/cards/ProductCard";
 import { getImageUrl } from "@/lib/imageUrl";
 
 

@@ -369,10 +369,10 @@ export default function FeaturedProductsPage() {
                                   <img
                                     src={getProductImage(product)}
                                     alt={product.name}
-                                    className="h-10 w-10 rounded-md object-cover"
+                                    className="h-10 w-10 rounded-md object-contain p-1 bg-white border border-gray-200"
                                   />
                                 ) : (
-                                  <div className="h-10 w-10 rounded-md bg-gray-100 flex items-center justify-center">
+                                  <div className="h-10 w-10 rounded-md bg-white border border-gray-200 flex items-center justify-center">
                                     <span className="text-xs text-gray-500">
                                       No img
                                     </span>
@@ -469,10 +469,10 @@ export default function FeaturedProductsPage() {
                                   <img
                                     src={getProductImage(product)}
                                     alt={product.name}
-                                    className="h-10 w-10 rounded-md object-cover"
+                                    className="h-10 w-10 rounded-md object-contain p-1 bg-white border border-gray-200"
                                   />
                                 ) : (
-                                  <div className="h-10 w-10 rounded-md bg-gray-100 flex items-center justify-center">
+                                  <div className="h-10 w-10 rounded-md bg-white border border-gray-200 flex items-center justify-center">
                                     <span className="text-xs text-gray-500">
                                       No img
                                     </span>

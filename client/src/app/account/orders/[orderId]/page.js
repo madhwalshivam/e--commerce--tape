@@ -22,7 +22,6 @@ export default function OrderDetailPage() {
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [cancelling, setCancelling] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
@@ -52,30 +51,6 @@ export default function OrderDetailPage() {
         fetchOrder();
     }, [isAuthenticated, authLoading, orderId, router]);
 
-    const handleCancelOrder = async () => {
-        if (!order || order.status === "CANCELLED" || order.status === "DELIVERED") return;
-
-        if (!confirm("Are you sure you want to cancel this order?")) return;
-
-        setCancelling(true);
-        try {
-            const response = await fetchApi(`/users/orders/${orderId}/cancel`, {
-                method: "POST",
-                credentials: "include",
-            });
-            if (response.success) {
-                toast.success("Order cancelled successfully");
-                setOrder({ ...order, status: "CANCELLED" });
-            } else {
-                toast.error(response.message || "Failed to cancel order");
-            }
-        } catch (err) {
-            console.error("Failed to cancel order:", err);
-            toast.error("Failed to cancel order. Please try again.");
-        } finally {
-            setCancelling(false);
-        }
-    };
 
     const getStatusColor = (status) => {
         const statusColors = {
@@ -93,11 +68,17 @@ export default function OrderDetailPage() {
         const colors = {
             PENDING: "text-yellow-600",
             SUCCESS: "text-green-600",
+            CAPTURED: "text-green-600",
             FAILED: "text-red-600",
             REFUNDED: "text-purple-600",
         };
         return colors[status] || "text-gray-600";
     };
+
+    // Derive payment status
+    const paymentStatus = order?.razorpayPayment?.status || 
+                         (order?.paymentMethod === "CASH" ? "PENDING" : 
+                         order?.paymentStatus || "N/A");
 
     if (loading || authLoading) {
         return (
@@ -151,15 +132,6 @@ export default function OrderDetailPage() {
                     <span className={`px-4 py-2 text-sm font-semibold rounded-full border ${getStatusColor(order.status)}`}>
                         {order.status}
                     </span>
-                    {order.status !== "CANCELLED" && order.status !== "DELIVERED" && order.status !== "SHIPPED" && (
-                        <Button variant="destructive" size="sm" onClick={handleCancelOrder} disabled={cancelling}>
-                            {cancelling ? (
-                                <><DynamicIcon name="Loader2" className="mr-2 h-4 w-4 animate-spin" /> Cancelling...</>
-                            ) : (
-                                <><DynamicIcon name="X" className="mr-2 h-4 w-4" /> Cancel Order</>
-                            )}
-                        </Button>
-                    )}
                 </div>
             </div>
 
@@ -175,7 +147,7 @@ export default function OrderDetailPage() {
                                 const productImage = item.variant?.images?.[0] || item.product?.images?.[0];
                                 return (
                                     <div key={item.id} className="p-6 flex gap-4">
-                                        <div className="relative w-20 h-20 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
+                                        <div className="relative w-20 h-20 flex-shrink-0 bg-white rounded-lg overflow-hidden border border-gray-200">
                                             <Image
                                                 src={getImageUrl(productImage)}
                                                 alt={item.productName || item.product?.name || "Product"}
@@ -317,8 +289,8 @@ export default function OrderDetailPage() {
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Status</span>
-                                <span className={`font-medium ${getPaymentStatusColor(order.paymentStatus)}`}>
-                                    {order.paymentStatus || "N/A"}
+                                <span className={`font-medium ${getPaymentStatusColor(paymentStatus)}`}>
+                                    {paymentStatus}
                                 </span>
                             </div>
                             {order.razorpayPayment?.razorpayPaymentId && (

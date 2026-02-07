@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {  Heart, Loader2 } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { fetchApi, formatCurrency } from "@/lib/utils";
 import { getImageUrl } from "@/lib/imageUrl";
@@ -20,7 +20,7 @@ export const ProductCard = ({ product }) => {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
-  
+
   // Logic from user request
   const [wishlistItems, setWishlistItems] = useState({});
   const [isAddingToWishlist, setIsAddingToWishlist] = useState({});
@@ -103,7 +103,7 @@ export const ProductCard = ({ product }) => {
             delete newState[product.id];
             return newState;
           });
-          
+
         }
       } else {
         // Add to wishlist
@@ -114,7 +114,7 @@ export const ProductCard = ({ product }) => {
         });
 
         setWishlistItems((prev) => ({ ...prev, [product.id]: true }));
-        
+
       }
     } catch (error) {
       console.error("Error updating wishlist:", error);
@@ -172,7 +172,7 @@ export const ProductCard = ({ product }) => {
 
     // Final fallback
     if (images.length === 0) {
-      images.push("/placeholder.jpg");
+      images.push("/tape.svg");
     }
 
     return images;
@@ -257,7 +257,7 @@ export const ProductCard = ({ product }) => {
   // If flash sale is active, use flash sale price and set original price
   let displayPrice = currentPrice;
   let showFlashSaleBadge = false;
-  
+
   if (hasFlashSale && flashSalePrice !== null) {
     // Store original price before flash sale
     if (!originalPrice) {
@@ -267,11 +267,11 @@ export const ProductCard = ({ product }) => {
     showFlashSaleBadge = true;
   }
 
-  const discountPercent = showFlashSaleBadge 
-    ? flashSaleDiscountPercent 
+  const discountPercent = showFlashSaleBadge
+    ? flashSaleDiscountPercent
     : (hasSale && originalPrice && currentPrice
-        ? calculateDiscountPercentage(originalPrice, currentPrice)
-        : 0);
+      ? calculateDiscountPercentage(originalPrice, currentPrice)
+      : 0);
 
 
 
@@ -280,143 +280,89 @@ export const ProductCard = ({ product }) => {
 
   return (
     <div
-      className="group relative bg-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 border border-gray-100 hover:border-primary/20 h-full flex flex-col"
+      className="group bg-white border border-gray-100 h-full flex flex-col transition-all duration-300 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Product Image Area */}
-      <Link href={`/products/${product.slug}`} className="block relative aspect-[4/5] overflow-hidden bg-gray-50">
-        
+      <Link href={`/products/${product.slug}`} className="block relative aspect-[4/5] overflow-hidden bg-white p-6">
         {/* Wishlist Button */}
         <button
           onClick={handleAddToWishlist}
           disabled={isAddingToWishlist[product.id]}
-          className="absolute top-3 right-3 z-20 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white text-gray-400 hover:text-red-500 transition-all duration-200 transform hover:scale-110"
+          className="absolute top-3 right-3 z-20 p-2 text-gray-300 hover:text-red-500 transition-colors"
         >
           {isAddingToWishlist[product.id] ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Heart
-              className={`h-5 w-5 ${wishlistItems[product.id] ? "fill-red-500 text-red-500" : ""}`}
+              className={`h-4 w-4 ${wishlistItems[product.id] ? "fill-red-500 text-red-500" : ""}`}
             />
           )}
         </button>
 
-        {/* Badges: Category & Discount */}
-        <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">
-            {/* Category Badge */}
-            {product.category && (
-                <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm text-xs font-semibold text-gray-800 rounded-md shadow-sm border border-gray-100 uppercase tracking-wide w-fit">
-                    {typeof product.category === 'object' ? product.category.name : product.category}
-                </span>
-            )}
-            {/* Flash Sale Badge */}
-            {showFlashSaleBadge && discountPercent > 0 && (
-                <div className="px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-md shadow-lg w-fit animate-pulse flex items-center gap-1">
-                    <span>⚡</span> {discountPercent}% OFF
-                </div>
-            )}
-            {/* Regular Sale Badge (only if not flash sale) */}
-            {!showFlashSaleBadge && hasSale && discountPercent > 0 && (
-                <div className="px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-md shadow-sm w-fit animate-pulse">
-                    {discountPercent}% OFF
-                </div>
-            )}
-        </div>
-
-        {/* Main Image with Hover Rotation */}
-        <div className="relative w-full h-full">
-            <Image
-                src={getAllProductImages[currentImageIndex] || "/placeholder.jpg"}
-                alt={product.name}
-                fill
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-        </div>
-
-        {/* Image Dots Indicator (if multiple) */}
-        {getAllProductImages.length > 1 && isHovered && (
-             <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-20">
-                {getAllProductImages.map((_, idx) => (
-                    <div 
-                        key={idx}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentImageIndex ? "w-4 bg-primary" : "w-1.5 bg-white/60"}`}
-                    />
-                ))}
-             </div>
+        {/* Sale Badge */}
+        {(hasSale || showFlashSaleBadge) && (
+          <div className="absolute top-0 left-0 p-3 z-10">
+            <span className="bg-[#FF4136] text-white text-[10px] font-black px-2 py-0.5 uppercase tracking-tighter shadow-sm">
+              {showFlashSaleBadge ? "FLASH" : "SALE"}
+            </span>
+          </div>
         )}
-        
-        {/* Overlay gradient on hover */}
-        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+        {/* Main Image */}
+        <div className="relative w-full h-full">
+          <Image
+            src={getAllProductImages[currentImageIndex] || "/tape.svg"}
+            alt={product.name}
+            fill
+            className="object-contain transition-transform duration-700 group-hover:scale-110"
+            sizes="(max-width: 768px) 50vw, 20vw"
+          />
+        </div>
+
+        {/* Hover label */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0">
+          View Details
+        </div>
       </Link>
 
       {/* Product Details */}
-      <div className="p-4 flex flex-col flex-grow">
-        <Link href={`/products/${product.slug}`} className="block">
-            <h3 className="font-medium text-gray-900 text-lg mb-1 line-clamp-1 group-hover:text-primary transition-colors" title={product.name}>
-                {product.name}
-            </h3>
+      <div className="p-4 flex flex-col flex-1 text-center bg-white border-t border-gray-50">
+        <Link href={`/products/${product.slug}`}>
+          <h3 className="font-display text-[14px] font-bold text-black uppercase tracking-tight mb-2 line-clamp-2 min-h-[2.5em] group-hover:text-[#F7941D] transition-colors leading-tight">
+            {product.name}
+          </h3>
         </Link>
-        
-        <div className="flex items-center gap-2 mb-2 text-sm text-gray-500">
-             <div className="flex items-center text-yellow-500">
-               
-                <span className="ml-1 font-medium text-gray-700">
-                    {product.avgRating && product.avgRating}
-                </span>
-             </div>
-        </div>
 
-        <div className="mt-auto pt-1 flex items-center justify-between border-t border-gray-50">
-          <div className="flex flex-col">
-             {showPrice ? (
-                 <>
-                    <div className="flex items-center gap-2">
-                        <span className={`text-xl font-bold ${showFlashSaleBadge ? 'text-orange-600' : 'text-primary'}`}>
-                            {formatCurrency(displayPrice)}
-                        </span>
-                        {(hasSale || showFlashSaleBadge) && originalPrice && (
-                            <span className="text-sm text-gray-400 line-through decoration-gray-400">
-                                {formatCurrency(originalPrice)}
-                            </span>
-                        )}
-                    </div>
-                 </>
-             ) : (
-                <Link href="/auth?redirect=products" className="text-sm font-medium text-primary hover:underline">
-                    Login to view price
-                </Link>
-             )}
+        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-3">
+          {typeof product.category === 'object' ? product.category.name : (product.category || "Premium Choice")}
+        </p>
+
+        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+          <div className="flex flex-col items-start text-left">
+            {showPrice ? (
+              <>
+                <span className="text-black font-black text-lg font-sans">
+                  {formatCurrency(displayPrice)}
+                </span>
+                {(hasSale || showFlashSaleBadge) && originalPrice && (
+                  <span className="text-gray-300 text-xs line-through leading-none font-sans">
+                    {formatCurrency(originalPrice)}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-[10px] font-bold text-[#F7941D] uppercase tracking-widest">Login for Price</span>
+            )}
           </div>
 
-          {/* Add to Cart / Quantity - Compact */}
-          {/* {!inCart ? (
-            <Button
-              className="bg-primary hover:bg-primary/90 text-white rounded-full h-10 w-10 p-0 shadow-md hover:shadow-lg transition-all duration-300"
-              onClick={handleAddToCart}
-              disabled={!showPrice} // Disable if price is hidden (guest)
-              title={!showPrice ? "Login to purchase" : "Add to Cart"}
-            >
-                {showAdded ? <Check className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-            </Button>
-          ) : (
-             <div className="flex items-center bg-gray-50 rounded-full border border-gray-100 shadow-sm h-10">
-                <button 
-                    onClick={handleDecrement}
-                    className="h-full px-3 text-gray-600 hover:text-primary transition-colors"
-                >
-                    <Minus className="h-3.5 w-3.5" />
-                </button>
-                <span className="text-sm font-bold text-gray-900 w-4 text-center">{quantity}</span>
-                <button 
-                    onClick={handleIncrement}
-                    className="h-full px-3 text-gray-600 hover:text-primary transition-colors"
-                >
-                    <Plus className="h-3.5 w-3.5" />
-                </button>
-             </div>
-          )} */}
+          <Link
+            href={`/products/${product.slug}`}
+            className="bg-[#F7941D] hover:bg-black text-white px-4 py-2 text-[11px] font-black uppercase tracking-widest transition-colors"
+          >
+            ADD
+          </Link>
         </div>
       </div>
     </div>

@@ -2,13 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { fetchApi, formatCurrency } from "@/lib/utils";
-import { getProductImageUrl as getImageUrl } from "@/lib/imageUrl";
+import { fetchApi } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Star, ArrowRight, Eye, Sparkles } from "lucide-react";
-import { useAddVariantToCart } from "@/lib/cart-utils";
-import { toast } from "sonner";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { ProductCard } from "@/components/cards/ProductCard";
 import {
   Carousel,
   CarouselContent,
@@ -20,7 +17,6 @@ import {
 export function NewArrivals() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { addVariantToCart } = useAddVariantToCart();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -36,20 +32,14 @@ export function NewArrivals() {
     fetchProducts();
   }, []);
 
-
-
-  const handleAddToCart = async (product) => {
-    if (product.variants?.length > 0) {
-      const variant = product.variants[0];
-      const result = await addVariantToCart(variant, 1, product.name);
-      
-    }
-  };
-
   if (loading) {
     return (
-      <section className="section-padding bg-white">
+      <section className="py-20 bg-white">
         <div className="section-container">
+          <div className="text-center mb-16 relative">
+            <div className="h-8 w-64 bg-gray-200 animate-pulse mx-auto mb-4 rounded" />
+            <div className="w-20 h-[3px] bg-gray-200 mx-auto mb-6 rounded-full" />
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-gray-100 rounded-2xl h-80 animate-pulse" />
@@ -63,16 +53,15 @@ export function NewArrivals() {
   if (!products.length) return null;
 
   return (
-    <section className="section-padding bg-white">
+    <section className="py-20 bg-white">
       <div className="section-container">
-        {/* Header */}
-        <div className="section-header">
-          <span className="section-badge">
-            <Sparkles className="w-4 h-4" />
-            New Arrivals
-          </span>
-          <h2 className="section-title">Just Arrived</h2>
-          <p className="section-subtitle">Check out our latest additions</p>
+        {/* Header - Consistent Style */}
+        <div className="text-center mb-16 relative">
+          <h2 className="font-sans text-3xl md:text-4xl font-bold tracking-tight uppercase mb-4">
+            <span className="text-black">JUST</span> <span className="text-[#F7941D]">ARRIVED</span>
+          </h2>
+          <div className="w-20 h-[3px] bg-[#F7941D] mx-auto mb-6 rounded-full" />
+          <p className="text-gray-400 font-medium tracking-widest uppercase text-[12px]">Check out our latest additions</p>
         </div>
 
         {/* Products Carousel */}
@@ -84,84 +73,23 @@ export function NewArrivals() {
             }}
             className="w-full"
           >
-            <CarouselContent className="-ml-4">
+            <CarouselContent className="-ml-3 md:-ml-6">
               {products.map((product) => (
-                <CarouselItem key={product.id} className="pl-4 basis-1/2 md:basis-1/3 lg:basis-1/6">
-                  <div className="product-card h-full">
-                    {/* Image */}
-                    <div className="product-image aspect-square relative">
-                      <Link href={`/products/${product.slug}`}>
-                        <Image
-                          src={getImageUrl(product)}
-                          alt={product.name}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
-                        />
-                      </Link>
-
-                      {/* New Badge */}
-                      <span className="absolute top-3 left-3 px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-lg z-10">
-                        New
-                      </span>
-
-                      {/* Quick Actions */}
-                      <div className="product-actions">
-                        <button 
-                          onClick={() => handleAddToCart(product)}
-                          className="w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-all"
-                        >
-                          <ShoppingCart className="w-4 h-4" />
-                        </button>
-                        <Link 
-                          href={`/products/${product.slug}`}
-                          className="w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-all"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-3">
-                      <Link href={`/products/${product.slug}`}>
-                        <h3 className="font-semibold text-gray-900 text-xs md:text-sm mb-1 line-clamp-2 hover:text-primary transition-colors min-h-[2.5em]">
-                          {product.name}
-                        </h3>
-                      </Link>
-
-                      {/* Rating */}
-                      {product.avgRating > 0 && (
-                        <div className="flex items-center gap-1 mb-1">
-                          <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                          <span className="text-[10px] text-gray-500">{product.avgRating.toFixed(1)}</span>
-                        </div>
-                      )}
-
-                      {/* Price */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="product-price text-sm">{formatCurrency(product.basePrice)}</span>
-                        {product.hasSale && product.regularPrice > product.basePrice && (
-                          <span className="product-price-old text-xs">{formatCurrency(product.regularPrice)}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                <CarouselItem key={product.id} className="pl-3 md:pl-6 basis-1/2 md:basis-1/3 lg:basis-1/5 xl:basis-1/6">
+                  <ProductCard product={product} />
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="absolute -left-2 top-1/2 -translate-y-1/2 z-10" />
-            <CarouselNext className="absolute -right-2 top-1/2 -translate-y-1/2 z-10" />
-          </Carousel>
-        </div>
 
-        {/* View All */}
-        <div className="text-center mt-10">
-          <Link href="/products?sort=newest">
-            <Button size="lg" className="btn-primary h-12 px-8 gap-2">
-              View All New Arrivals <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
+            {/* Minimalist Controls */}
+            <div className="flex justify-center gap-4 mt-12 md:mt-16">
+              <CarouselPrevious className="relative inset-0 translate-y-0 h-14 w-14 border-2 border-black rounded-none bg-transparent hover:bg-black hover:text-white transition-all duration-300" />
+              <Link href="/products?sort=newest" className="h-14 border-2 border-black flex items-center px-10 font-display font-black text-sm tracking-[0.2em] hover:bg-black hover:text-white transition-all uppercase">
+                View All New
+              </Link>
+              <CarouselNext className="relative inset-0 translate-y-0 h-14 w-14 border-2 border-black rounded-none bg-transparent hover:bg-black hover:text-white transition-all duration-300" />
+            </div>
+          </Carousel>
         </div>
       </div>
     </section>

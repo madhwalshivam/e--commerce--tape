@@ -455,11 +455,22 @@ export default function ReturnRequestsPage() {
                           <User className="h-4 w-4 text-[#4CAF50]" />
                           <p className="text-sm font-medium text-[#4B5563]">{t('return_requests.details.customer')}</p>
                         </div>
-                        <p className="font-semibold text-[#1F2937]">{returnReq.user.name}</p>
-                        <p className="text-sm text-[#9CA3AF]">{returnReq.user.email}</p>
-                        {returnReq.user.phone && (
-                          <p className="text-sm text-[#9CA3AF]">{returnReq.user.phone}</p>
-                        )}
+                        <div className="space-y-1">
+                          <div>
+                            <p className="text-xs text-[#9CA3AF] mb-0.5">{t('return_requests.common.name')}</p>
+                            <p className="font-semibold text-[#1F2937]">{returnReq.user.name}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-[#9CA3AF] mb-0.5">{t('return_requests.common.email')}</p>
+                            <p className="text-sm text-[#1F2937]">{returnReq.user.email}</p>
+                          </div>
+                          {returnReq.user.phone && (
+                            <div>
+                              <p className="text-xs text-[#9CA3AF] mb-0.5">{t('return_requests.common.number')}</p>
+                              <p className="text-sm text-[#1F2937]">{returnReq.user.phone}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Product Details */}
@@ -769,11 +780,22 @@ export default function ReturnRequestsPage() {
 
               <div className="p-4 bg-[#F3F7F6] rounded-lg border border-[#E5E7EB]">
                 <p className="text-sm font-medium text-[#4B5563] mb-2">{t('return_requests.details.customer')}</p>
-                <p className="font-semibold text-[#1F2937]">{selectedReturn.user.name}</p>
-                <p className="text-sm text-[#9CA3AF]">{selectedReturn.user.email}</p>
-                {selectedReturn.user.phone && (
-                  <p className="text-sm text-[#9CA3AF]">{selectedReturn.user.phone}</p>
-                )}
+                <div className="space-y-1">
+                  <div>
+                    <p className="text-xs text-[#9CA3AF] mb-0.5">{t('return_requests.common.name')}</p>
+                    <p className="font-semibold text-[#1F2937]">{selectedReturn.user.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#9CA3AF] mb-0.5">{t('return_requests.common.email')}</p>
+                    <p className="text-sm text-[#1F2937]">{selectedReturn.user.email}</p>
+                  </div>
+                  {selectedReturn.user.phone && (
+                    <div>
+                      <p className="text-xs text-[#9CA3AF] mb-0.5">{t('return_requests.common.number')}</p>
+                      <p className="text-sm text-[#1F2937]">{selectedReturn.user.phone}</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="p-4 bg-[#F3F7F6] rounded-lg border border-[#E5E7EB]">

@@ -10,8 +10,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 // import ReviewSection from "./ReviewSection";
 import { useAddVariantToCart } from "@/lib/cart-utils";
-import { ProductCard } from "@/components/products/ProductCard";
+import { ProductCard } from "@/components/cards/ProductCard";
 import { getImageUrl } from "@/lib/imageUrl";
+import { VariantSelector } from "@/components/product/VariantSelector";
 
 export default function ProductContent({ slug }) {
   const [product, setProduct] = useState(null);
@@ -42,7 +43,8 @@ export default function ProductContent({ slug }) {
 
     const baseSalePrice = variant.salePrice ? (typeof variant.salePrice === 'string' ? parseFloat(variant.salePrice) : variant.salePrice) : null;
     const basePrice = variant.price ? (typeof variant.price === 'string' ? parseFloat(variant.price) : variant.price) : 0;
-    const originalPrice = baseSalePrice || basePrice;
+    const price = baseSalePrice || basePrice;
+    const originalPrice = basePrice;
 
     if (variant.pricingSlabs && variant.pricingSlabs.length > 0) {
       const sortedSlabs = [...variant.pricingSlabs].sort((a, b) => b.minQty - a.minQty);
@@ -54,7 +56,7 @@ export default function ProductContent({ slug }) {
       }
     }
 
-    return { price: originalPrice, originalPrice: originalPrice, source: 'DEFAULT', slab: null };
+    return { price: price, originalPrice: originalPrice, source: 'DEFAULT', slab: null };
   };
 
   // Fetch product details
@@ -65,6 +67,7 @@ export default function ProductContent({ slug }) {
       try {
         const response = await fetchApi(`/public/products/${slug}`);
         const productData = response.data.product;
+
 
         setProduct(productData);
         setRelatedProducts(response.data.relatedProducts || []);
@@ -83,8 +86,12 @@ export default function ProductContent({ slug }) {
 
           setAvailableCombinations(combinations);
 
-          if (productData.variants.length > 0) {
-            // Default to the first active variant
+          // Only auto-select variant if product doesn't have its own price set
+          // If product has price, show product price first, let user select variant manually
+          const hasProductPrice = productData.price && parseFloat(productData.price) > 0;
+
+          if (!hasProductPrice && productData.variants.length > 0) {
+            // Default to the first active variant only if no product-level price
             const firstVariant = productData.variants[0];
             setSelectedVariant(firstVariant);
 
@@ -314,16 +321,16 @@ export default function ProductContent({ slug }) {
 
     if (imagesToShow.length === 0) {
       return (
-        <div className="relative aspect-square w-full bg-gray-100 rounded-lg overflow-hidden">
-          <Image src="/images/product-placeholder.jpg" alt={product?.name || "Product"} fill className="object-contain" priority />
+        <div className="relative aspect-square w-full bg-white rounded-lg overflow-hidden border border-gray-200">
+          <Image src="/images/product-placeholder.jpg" alt={product?.name || "Product"} fill className="object-contain p-2" priority />
         </div>
       );
     }
 
     if (imagesToShow.length === 1) {
       return (
-        <div className="relative aspect-square w-full bg-gray-100 rounded-lg overflow-hidden">
-          <Image src={getImageUrl(imagesToShow[0].url)} alt={product?.name || "Product"} fill className="object-contain" priority />
+        <div className="relative aspect-square w-full bg-white rounded-lg overflow-hidden border border-gray-200">
+          <Image src={getImageUrl(imagesToShow[0].url)} alt={product?.name || "Product"} fill className="object-contain p-2" priority />
         </div>
       );
     }
@@ -333,14 +340,14 @@ export default function ProductContent({ slug }) {
 
     return (
       <div className="space-y-4">
-        <div className="relative aspect-square w-full bg-gray-100 rounded-lg overflow-hidden">
-          <Image src={getImageUrl(currentMainImage?.url)} alt={product?.name || "Product"} fill className="object-contain" priority />
+        <div className="relative aspect-square w-full bg-white rounded-lg overflow-hidden border border-gray-200">
+          <Image src={getImageUrl(currentMainImage?.url)} alt={product?.name || "Product"} fill className="object-contain p-2" priority />
         </div>
 
         <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
           {imagesToShow.map((image, index) => (
-            <div key={index} className={`relative aspect-square w-full bg-gray-100 rounded-lg overflow-hidden cursor-pointer border-2 ${currentMainImage?.url === image.url ? "border-primary" : "border-transparent"}`} onClick={() => setMainImage(image)}>
-              <Image src={getImageUrl(image.url)} alt={`${product.name} - Image ${index + 1}`} fill className="object-contain" />
+            <div key={index} className={`relative aspect-square w-full bg-white rounded-lg overflow-hidden cursor-pointer border-2 ${currentMainImage?.url === image.url ? "border-primary" : "border-gray-200"}`} onClick={() => setMainImage(image)}>
+              <Image src={getImageUrl(image.url)} alt={`${product.name} - Image ${index + 1}`} fill className="object-contain p-1" />
             </div>
           ))}
         </div>
@@ -613,6 +620,8 @@ export default function ProductContent({ slug }) {
             )}
           </div>
 
+          <VariantSelector product={product} />
+
           {/* Short Description */}
           {product.shortDescription && (
             <div className="p-4 border border-gray-200 rounded-md mb-6 bg-white">
@@ -620,35 +629,6 @@ export default function ProductContent({ slug }) {
             </div>
           )}
 
-          {/* Dynamic Attribute Selection */}
-          {product.attributeOptions && product.attributeOptions.length > 0 && (
-            <div className="space-y-6 mb-6">
-              {product.attributeOptions.map((attribute) => {
-                const availableValues = getAvailableValuesForAttribute(attribute.id);
-                const selectedValueId = selectedAttributes[attribute.id];
-
-                return (
-                  <div key={attribute.id} className="mb-6">
-                    <h3 className="text-sm font-semibold mb-3 uppercase tracking-wide">SELECT {attribute.name.toUpperCase()}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {availableValues.length > 0 ? (
-                        availableValues.map((value) => {
-                          const isSelected = selectedValueId === value.id;
-                          return (
-                            <button key={value.id} className={`px-4 py-2 rounded-md border-2 text-sm font-medium transition-all ${isSelected ? "border-primary bg-primary text-white" : "border-gray-300 hover:border-gray-500 text-gray-700"}`} onClick={() => handleAttributeChange(attribute.id, value.id)} title={value.value}>
-                              {value.value}
-                            </button>
-                          );
-                        })
-                      ) : (
-                        <p className="text-sm text-gray-500">No {attribute.name.toLowerCase()} options available</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
 
           {/* Success Message */}
           {cartSuccess && (
@@ -714,9 +694,7 @@ export default function ProductContent({ slug }) {
 
           {/* Product Metadata */}
           <div className="border-t border-gray-200 pt-5 space-y-3 text-sm">
-            {selectedVariant && selectedVariant.sku && (
-              <div className="flex"><span className="font-medium w-32 text-gray-700">SKU:</span><span className="text-gray-600">{selectedVariant.sku}</span></div>
-            )}
+
 
             {product.category && (
               <div className="flex">

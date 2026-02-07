@@ -24,6 +24,23 @@ export const getBrandsByTag = asyncHandler(async (req, res) => {
     .json(new ApiResponsive(200, { brands: data }, "Brands by tag fetched"));
 });
 
+export const getAllBrands = asyncHandler(async (req, res) => {
+  const brands = await prisma.brand.findMany({
+    orderBy: { name: "asc" },
+  });
+  const data = brands.map((b) => ({
+    id: b.id,
+    name: b.name,
+    slug: b.slug,
+    image: b.image,
+    logo: b.logo,
+    productCount: 0, // Simplified for performance, can include count if needed
+  }));
+  res
+    .status(200)
+    .json(new ApiResponsive(200, { brands: data }, "All brands fetched"));
+});
+
 export const getBrandBySlug = asyncHandler(async (req, res) => {
   const { slug } = req.params;
   const {

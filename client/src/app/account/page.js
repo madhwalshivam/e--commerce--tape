@@ -159,15 +159,25 @@ export default function AccountPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                     <div>
                                         <p className="text-sm text-gray-500 mb-1">Full Name</p>
-                                        <p className="font-medium text-gray-900">{user?.name || "Not provided"}</p>
+                                        <p className="font-medium text-gray-900 break-words">{user?.name || "Not provided"}</p>
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <p className="text-sm text-gray-500 mb-1">Email</p>
-                                        <p className="font-medium text-gray-900">{user?.email || "Not provided"}</p>
+                                        <p
+                                            className="font-medium text-gray-900 truncate"
+                                            title={user?.email || ""}
+                                        >
+                                            {user?.email || "Not provided"}
+                                        </p>
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <p className="text-sm text-gray-500 mb-1">Phone</p>
-                                        <p className="font-medium text-gray-900">{user?.phone || "Not provided"}</p>
+                                        <p
+                                            className="font-medium text-gray-900 truncate"
+                                            title={user?.phone || ""}
+                                        >
+                                            {user?.phone || "Not provided"}
+                                        </p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-500 mb-1">Member Since</p>

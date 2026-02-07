@@ -63,84 +63,81 @@ export const ProductCarousel = ({ products, title, subtitle, viewAllLink = "/pro
                 >
                     <CarouselContent className="-ml-4">
                         {products.map((product) => (
-                            <CarouselItem key={product.id} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                                <div className="group relative bg-card rounded-2xl overflow-hidden card-shadow hover:shadow-2xl transition-all duration-300 border border-border hover:border-primary/30">
+                            <CarouselItem key={product.id} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/4 xl:basis-1/5">
+                                <div className="bg-white h-full flex flex-col p-2 sm:p-4 border border-gray-100 rounded-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                                     {/* Image */}
-                                    <Link href={`/products/${product.slug}`}>
-                                        <div className="aspect-square bg-gradient-to-br from-muted to-muted/50 relative overflow-hidden">
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <div className="w-24 h-24 bg-muted-foreground/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                                                    <ShoppingCart className="h-10 w-10 text-muted-foreground/30" />
-                                                </div>
-                                            </div>
-                                            
-                                            {/* Category Badge */}
-                                            <div className="absolute top-3 left-3">
-                                                <span className="px-2.5 py-1 bg-foreground/90 text-background text-xs font-medium rounded-full backdrop-blur-sm">
-                                                    {getCategoryName(product.category)}
-                                                </span>
-                                            </div>
-
-                                            {/* Quick Add Button on Hover */}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                <div className="absolute bottom-4 left-4 right-4">
-                                                    <button
-                                                        onClick={(e) => handleAddToCart(e, product)}
-                                                        className={`w-full py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
-                                                            addedItems[product.id] || isInCart(product.id)
-                                                                ? "bg-green-500 text-white"
-                                                                : "bg-primary text-primary-foreground hover:bg-primary/90"
-                                                        }`}
-                                                    >
-                                                        {addedItems[product.id] ? (
-                                                            <>
-                                                                <Check className="h-4 w-4" />
-                                                                Added!
-                                                            </>
-                                                        ) : isInCart(product.id) ? (
-                                                            <>
-                                                                <Check className="h-4 w-4" />
-                                                                In Cart
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Plus className="h-4 w-4" />
-                                                                Quick Add
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                </div>
+                                    <Link href={`/products/${product.slug}`} className="block relative w-full aspect-square mb-2 bg-[#F7F7F7] flex items-center justify-center p-4">
+                                        {/* Simple Image centering */}
+                                        <div className="relative w-full h-full">
+                                            {/* Note: In a real app we'd use the actual product image. Using placeholder logic if no image */}
+                                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                <ShoppingCart className="h-10 w-10 opacity-20" />
                                             </div>
                                         </div>
                                     </Link>
 
                                     {/* Info */}
-                                    <div className="p-4">
+                                    <div className="flex-1 flex flex-col items-start gap-1">
                                         <Link href={`/products/${product.slug}`}>
-                                            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                                            <h3 className="font-sans text-[16px] text-[#0F1111] leading-snug line-clamp-2 hover:text-[#C7511F] hover:underline cursor-pointer">
                                                 {product.name}
                                             </h3>
                                         </Link>
-                                        <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
-                                            {product.power && `${product.power}`} {product.size && `• ${product.size}`}
-                                        </p>
-                                        
-                                        <div className="flex items-center justify-between mt-3">
-                                            <span className="text-lg font-bold text-primary">
-                                                {formatPrice(product.price)}
-                                            </span>
-                                            <div className="flex items-center gap-1 text-yellow-500">
-                                                <Star className="h-4 w-4 fill-current" />
-                                                <span className="text-xs font-medium text-muted-foreground">4.5</span>
+
+                                        {/* Rating */}
+                                        <div className="flex items-center gap-1">
+                                            <div className="flex text-[#FFA41C]">
+                                                {[1, 2, 3, 4].map(i => <Star key={i} className="h-4 w-4 fill-current" />)}
+                                                <Star className="h-4 w-4 fill-current opacity-50" />
                                             </div>
+                                            <span className="text-xs text-[#007185] hover:text-[#C7511F] hover:underline cursor-pointer">1,234</span>
+                                        </div>
+
+                                        {/* Price */}
+                                        <div className="mt-1 flex items-baseline gap-1">
+                                            <span className="text-xs relative -top-1.5">₹</span>
+                                            <span className="text-[21px] md:text-[24px] font-medium text-[#0F1111] leading-none">
+                                                {typeof product.price === 'number' ? Math.floor(product.price).toLocaleString() : product.price}
+                                            </span>
+                                            {/* Fraction (optional, if we had it) */}
+                                            {/* <span className="text-xs relative -top-1.5">00</span> */}
+
+                                            {/* MRP strikethrough */}
+                                            {product.regularPrice && (
+                                                <span className="text-[12px] text-[#565959] line-through ml-1">
+                                                    M.R.P: ₹{product.regularPrice.toLocaleString()}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Prime Badge (Static for UI) */}
+                                        <div className="text-[#00A8E1] text-[13px] font-bold flex items-center gap-1 my-1">
+                                            <Check className="h-4 w-4" /> <span className="text-[#565959] font-normal text-xs">Prime</span>
+                                        </div>
+
+                                        <div className="text-xs text-[#565959] mb-2">
+                                            FREE Delivery by <span className="font-bold text-black">D-Fix</span>
+                                        </div>
+
+                                        {/* Add to Cart Button */}
+                                        <div className="mt-auto w-full">
+                                            <button
+                                                onClick={(e) => handleAddToCart(e, product)}
+                                                className={`w-full py-1.5 rounded-[100px] text-[13px] font-medium transition-all shadow-sm border border-transparent ${addedItems[product.id] || isInCart(product.id)
+                                                    ? "bg-green-500 text-white hover:bg-green-600"
+                                                    : "bg-[#FFD814] hover:bg-[#F7CA00] text-[#0F1111] border-[#FCD200]"
+                                                    }`}
+                                            >
+                                                {addedItems[product.id] ? "Added to Cart" : isInCart(product.id) ? "In Cart" : "Add to Cart"}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </CarouselItem>
                         ))}
                     </CarouselContent>
-                    <CarouselPrevious className="hidden md:flex -left-4 w-10 h-10 bg-card border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary" />
-                    <CarouselNext className="hidden md:flex -right-4 w-10 h-10 bg-card border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary" />
+                    <CarouselPrevious className="hidden md:flex -left-5 top-1/3 w-12 h-20 bg-white/70 hover:bg-white border rounded-r-md rounded-l-none text-black shadow-md" />
+                    <CarouselNext className="hidden md:flex -right-5 top-1/3 w-12 h-20 bg-white/70 hover:bg-white border rounded-l-md rounded-r-none text-black shadow-md" />
                 </Carousel>
 
                 {/* Mobile View All */}
@@ -152,7 +149,7 @@ export const ProductCarousel = ({ products, title, subtitle, viewAllLink = "/pro
                         </Button>
                     </Link>
                 </div>
-            </div>
-        </section>
+            </div >
+        </section >
     );
 };

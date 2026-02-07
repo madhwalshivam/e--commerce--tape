@@ -91,9 +91,8 @@ export default function HeroSection() {
         {slides.map((slide, index) => (
           <div
             key={index}
-            className={`relative w-full transition-opacity duration-700 ${
-              index === current ? "opacity-100 block" : "opacity-0 hidden"
-            }`}
+            className={`relative w-full transition-opacity duration-700 ${index === current ? "opacity-100 block" : "opacity-0 hidden"
+              }`}
           >
             {/* Desktop Banner Image */}
             <div className="hidden md:block relative w-full">
@@ -108,7 +107,7 @@ export default function HeroSection() {
                 style={{ objectFit: 'cover', objectPosition: 'center' }}
               />
             </div>
-            
+
             {/* Mobile Banner Image */}
             <div className="block md:hidden relative w-full">
               <Image
@@ -128,7 +127,7 @@ export default function HeroSection() {
         {/* Navigation Arrows */}
         {slides.length > 1 && (
           <>
-            <button 
+            <button
               onClick={prevSlide}
               onMouseEnter={() => setIsAutoPlaying(false)}
               onMouseLeave={() => setIsAutoPlaying(true)}
@@ -136,7 +135,7 @@ export default function HeroSection() {
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <button 
+            <button
               onClick={nextSlide}
               onMouseEnter={() => setIsAutoPlaying(false)}
               onMouseLeave={() => setIsAutoPlaying(true)}
@@ -154,9 +153,8 @@ export default function HeroSection() {
               <button
                 key={index}
                 onClick={() => setCurrent(index)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  index === current ? "w-8 bg-primary" : "w-2 bg-gray-400 hover:bg-gray-600"
-                }`}
+                className={`h-2 rounded-full transition-all duration-300 ${index === current ? "w-8 bg-primary" : "w-2 bg-gray-400 hover:bg-gray-600"
+                  }`}
               />
             ))}
           </div>
@@ -172,9 +170,8 @@ export default function HeroSection() {
       {slides.map((slide, index) => (
         <div
           key={index}
-          className={`absolute inset-0 transition-opacity duration-700 ${
-            index === current ? "opacity-100 z-10" : "opacity-0 z-0"
-          }`}
+          className={`absolute inset-0 transition-opacity duration-700 ${index === current ? "opacity-100 z-10" : "opacity-0 z-0"
+            }`}
         >
           {/* Background Image */}
           <Image
@@ -185,7 +182,7 @@ export default function HeroSection() {
             priority={index === 0}
             sizes="100vw"
           />
-          
+
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#2D2D2D]/95 via-[#2D2D2D]/70 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#2D2D2D]/50 to-transparent" />
@@ -206,7 +203,7 @@ export default function HeroSection() {
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-3 leading-tight">
               {slides[current].headline}
             </h1>
-            
+
             {/* Subheadline */}
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-primary mb-6">
               {slides[current].subheadline}
@@ -241,7 +238,7 @@ export default function HeroSection() {
       {/* Navigation Arrows */}
       {slides.length > 1 && (
         <>
-          <button 
+          <button
             onClick={prevSlide}
             onMouseEnter={() => setIsAutoPlaying(false)}
             onMouseLeave={() => setIsAutoPlaying(true)}
@@ -249,7 +246,7 @@ export default function HeroSection() {
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <button 
+          <button
             onClick={nextSlide}
             onMouseEnter={() => setIsAutoPlaying(false)}
             onMouseLeave={() => setIsAutoPlaying(true)}
@@ -267,9 +264,8 @@ export default function HeroSection() {
             <button
               key={index}
               onClick={() => setCurrent(index)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                index === current ? "w-8 bg-primary" : "w-2 bg-white/40 hover:bg-white/60"
-              }`}
+              className={`h-2 rounded-full transition-all duration-300 ${index === current ? "w-8 bg-primary" : "w-2 bg-white/40 hover:bg-white/60"
+                }`}
             />
           ))}
         </div>

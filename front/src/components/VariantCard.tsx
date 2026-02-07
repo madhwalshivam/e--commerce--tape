@@ -16,6 +16,11 @@ import {
   Image as ImageIcon,
   Edit,
   Layers,
+  Search,
+  Package,
+  Loader2,
+  ExternalLink,
+  Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { products, moq, pricingSlabs } from "@/api/adminService";
@@ -36,9 +41,9 @@ interface VariantData {
   id?: string;
   name: string;
   sku: string;
-  price: string;
+  sellingPrice: string;
+  mrp?: string;
   stock: string;
-  salePrice?: string;
   images?: ImageData[];
   attributeValueIds?: string[];
   attributes?: Array<{
@@ -60,6 +65,7 @@ interface VariantData {
   shippingHeight?: number;
   shippingWeight?: number;
   pricingSlabs?: PricingSlabData[];
+  redirectUrl?: string;
 }
 
 interface PricingSlabData {
@@ -86,7 +92,6 @@ export default function VariantCard({
   onRemove,
   onImagesChange,
   isEditMode = false,
-  shiprocketEnabled = false,
 }: VariantCardProps) {
   const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(true); // Default expanded so user can see images
@@ -102,6 +107,14 @@ export default function VariantCard({
   const [editingSlab, setEditingSlab] = useState<PricingSlabData | null>(null);
   const [slabForm, setSlabForm] = useState({ minQty: 1, maxQty: "", price: "" });
   const [slabLoading, setSlabLoading] = useState(false);
+
+  // Redirect URL Search states
+  const [showUrlSearch, setShowUrlSearch] = useState(false);
+  const [urlSearchQuery, setUrlSearchQuery] = useState("");
+  const [urlSearchResults, setUrlSearchResults] = useState<any[]>([]);
+  const [isSearchingUrl, setIsSearchingUrl] = useState(false);
+
+
 
   // Fetch MOQ when variant has ID (edit mode)
   useEffect(() => {
@@ -794,14 +807,7 @@ export default function VariantCard({
 
   // Generate variant display name
   const getVariantDisplayName = () => {
-    const parts = [];
-    if (variant.attributes && variant.attributes.length > 0) {
-      const attrStrings = variant.attributes.map(
-        (attr: any) => `${attr.attribute}: ${attr.value}`
-      );
-      parts.push(...attrStrings);
-    }
-    return parts.length > 0 ? parts.join(" - ") : `Variant ${index + 1}`;
+    return `Variant ${index + 1}`;
   };
 
   return (
@@ -821,9 +827,6 @@ export default function VariantCard({
               </Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            SKU: {variant.sku || "Auto-generated"}
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <span
@@ -848,479 +851,578 @@ export default function VariantCard({
       </div>
 
       {/* Collapsed Preview */}
-      {!isExpanded && hasImages && (
-        <div className="flex gap-2 overflow-x-auto pb-2 flex-shrink-0">
-          {currentImages.slice(0, 4).map((image, imageIndex) => (
-            <div
-              key={image.id || image.tempId || imageIndex}
-              className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 ${image.isPrimary
-                ? "border-green-500 ring-1 ring-green-200"
-                : "border-gray-200"
-                }`}
-            >
-              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                {image.url ? (
-                  <img
-                    src={image.url}
-                    alt={`Preview ${imageIndex + 1}`}
-                    className="w-full h-full object-cover"
-                    onLoad={() => {
-                      console.log(`✅ Preview image loaded: ${image.url}`);
-                    }}
-                    onError={(e) => {
-                      console.error(`❌ Preview image failed: ${image.url}`);
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = "none";
-                      const parent = target.parentElement;
-                      if (parent) {
-                        parent.innerHTML = `
-                          <div class="flex items-center justify-center h-full bg-gray-100 text-gray-400">
+      {
+        !isExpanded && hasImages && (
+          <div className="flex gap-2 overflow-x-auto pb-2 flex-shrink-0">
+            {currentImages.slice(0, 4).map((image, imageIndex) => (
+              <div
+                key={image.id || image.tempId || imageIndex}
+                className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 ${image.isPrimary
+                  ? "border-green-500 ring-1 ring-green-200"
+                  : "border-gray-200"
+                  }`}
+              >
+                <div className="w-full h-full bg-white flex items-center justify-center">
+                  {image.url ? (
+                    <img
+                      src={image.url}
+                      alt={`Preview ${imageIndex + 1}`}
+                      className="w-full h-full object-contain p-1"
+                      onLoad={() => {
+                        console.log(`✅ Preview image loaded: ${image.url}`);
+                      }}
+                      onError={(e) => {
+                        console.error(`❌ Preview image failed: ${image.url}`);
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `
+                          <div class="flex items-center justify-center h-full bg-white text-gray-400">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                           </div>
                         `;
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-400">
-                    <ImageIcon className="h-4 w-4" />
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400">
+                      <ImageIcon className="h-4 w-4" />
+                    </div>
+                  )}
+                </div>
+                {image.isPrimary && (
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs px-1 rounded-bl">
+                    P
                   </div>
                 )}
               </div>
-              {image.isPrimary && (
-                <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs px-1 rounded-bl">
-                  P
-                </div>
-              )}
-            </div>
-          ))}
-          {currentImages.length > 4 && (
-            <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-500">
-              +{currentImages.length - 4}
-            </div>
-          )}
-        </div>
-      )}
+            ))}
+            {currentImages.length > 4 && (
+              <div className="flex-shrink-0 w-16 h-16 bg-white rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-500">
+                +{currentImages.length - 4}
+              </div>
+            )}
+          </div>
+        )
+      }
 
       {/* Expanded Content */}
-      {isExpanded && (
-        <div className="space-y-4 flex-1">
-          {/* Variant Details */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor={`sku-${index}`} className="text-xs">
-                SKU *
-              </Label>
-              <Input
-                id={`sku-${index}`}
-                value={variant.sku}
-                onChange={(e) => handleInputChange("sku", e.target.value)}
-                className="h-8"
-                required
-                placeholder="Auto-generated, editable"
-              />
-            </div>
+      {
+        isExpanded && (
+          <div className="space-y-4 flex-1">
+            {/* Variant Details */}
+            <div className="grid grid-cols-2 gap-3">
 
-            <div className="space-y-1">
-              <Label htmlFor={`quantity-${index}`} className="text-xs">
-                Stock
-              </Label>
-              <Input
-                id={`quantity-${index}`}
-                type="number"
-                min="0"
-                value={variant.quantity || ""}
-                onChange={(e) => handleInputChange("quantity", e.target.value)}
-                className="h-8"
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor={`price-${index}`} className="text-xs">
-                Price (₹)
-              </Label>
-              <Input
-                id={`price-${index}`}
-                type="number"
-                min="0"
-
-                value={variant.price}
-                onChange={(e) => handleInputChange("price", e.target.value)}
-                className="h-8"
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor={`salePrice-${index}`} className="text-xs">
-                Sale Price (₹)
-              </Label>
-              <Input
-                id={`salePrice-${index}`}
-                type="number"
-                min="0"
-
-                value={variant.salePrice || ""}
-                onChange={(e) => handleInputChange("salePrice", e.target.value)}
-                className="h-8"
-                placeholder="Optional"
-              />
-            </div>
-
-            {/* MOQ Settings */}
-            <div className="space-y-2 border-t pt-3 mt-3">
-              <div className="flex items-center justify-between p-2 border rounded-lg bg-gray-50">
-                <div className="space-y-0.5 flex-1">
-                  <Label className="text-xs font-medium">
-                    {t("variant_card.moq.enable")}
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    {t("variant_card.moq.override_desc")}
-                  </p>
-                </div>
-                <Switch
-                  checked={variantMOQ.isActive}
-                  onCheckedChange={(checked: boolean) => {
-                    const updatedMOQ = { ...variantMOQ, isActive: checked };
-                    setVariantMOQ(updatedMOQ);
-                    onUpdate(index, "moq", updatedMOQ);
-                  }}
+              <div className="space-y-1">
+                <Label htmlFor={`quantity-${index}`} className="text-xs">
+                  Stock
+                </Label>
+                <Input
+                  id={`quantity-${index}`}
+                  type="number"
+                  min="0"
+                  value={variant.quantity || ""}
+                  onChange={(e) => handleInputChange("quantity", e.target.value)}
+                  className="h-8"
+                  required
                 />
               </div>
 
-              {variantMOQ.isActive && (
-                <div className="space-y-1">
-                  <Label htmlFor={`moq-${index}`} className="text-xs">
-                    {t("variant_card.moq.min_quantity")}
-                  </Label>
-                  <Input
-                    id={`moq-${index}`}
-                    type="number"
-                    min="1"
-                    value={variantMOQ.minQuantity}
-                    onChange={(e) => {
-                      const updatedMOQ = {
-                        ...variantMOQ,
-                        minQuantity: parseInt(e.target.value) || 1,
-                      };
+              <div className="space-y-1">
+                <Label htmlFor={`sellingPrice-${index}`} className="text-xs">
+                  Sale Price (Actual Price) (₹)
+                </Label>
+                <Input
+                  id={`sellingPrice-${index}`}
+                  type="number"
+                  min="0"
+                  value={variant.sellingPrice}
+                  onChange={(e) => handleInputChange("sellingPrice", e.target.value)}
+                  className="h-8"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor={`mrp-${index}`} className="text-xs">
+                  MRP (Original Price) (₹)
+                </Label>
+                <Input
+                  id={`mrp-${index}`}
+                  type="number"
+                  min="0"
+                  value={variant.mrp || ""}
+                  onChange={(e) => handleInputChange("mrp", e.target.value)}
+                  className="h-8"
+                  placeholder="Optional"
+                />
+              </div>
+
+              {/* MOQ Settings */}
+              <div className="space-y-2 border-t pt-3 mt-3">
+                <div className="flex items-center justify-between p-2 border rounded-lg bg-gray-50">
+                  <div className="space-y-0.5 flex-1">
+                    <Label className="text-xs font-medium">
+                      {t("variant_card.moq.enable")}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {t("variant_card.moq.override_desc")}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={variantMOQ.isActive}
+                    onCheckedChange={(checked: boolean) => {
+                      const updatedMOQ = { ...variantMOQ, isActive: checked };
                       setVariantMOQ(updatedMOQ);
                       onUpdate(index, "moq", updatedMOQ);
                     }}
-                    className="h-8"
-                    placeholder={t("variant_card.moq.placeholder")}
                   />
                 </div>
-              )}
-            </div>
 
-            {/* Pricing Slabs Section */}
-            <div className="space-y-3 border-t pt-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-purple-600" />
-                  <Label className="text-sm font-medium">{t("variant_card.pricing_slabs.title")}</Label>
-                </div>
-                {!showSlabForm && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setEditingSlab(null);
-                      setSlabForm({ minQty: 1, maxQty: "", price: "" });
-                      setShowSlabForm(true);
-                    }}
-                    className="h-7 text-xs"
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    {t("variant_card.pricing_slabs.add")}
-                  </Button>
+                {variantMOQ.isActive && (
+                  <div className="space-y-1">
+                    <Label htmlFor={`moq-${index}`} className="text-xs">
+                      {t("variant_card.moq.min_quantity")}
+                    </Label>
+                    <Input
+                      id={`moq-${index}`}
+                      type="number"
+                      min="1"
+                      value={variantMOQ.minQuantity}
+                      onChange={(e) => {
+                        const updatedMOQ = {
+                          ...variantMOQ,
+                          minQuantity: parseInt(e.target.value) || 1,
+                        };
+                        setVariantMOQ(updatedMOQ);
+                        onUpdate(index, "moq", updatedMOQ);
+                      }}
+                      className="h-8"
+                      placeholder={t("variant_card.moq.placeholder")}
+                    />
+                  </div>
                 )}
               </div>
 
-              {/* Existing Slabs List */}
-              {variantSlabs.length > 0 ? (
-                <div className="space-y-2">
-                  {variantSlabs.map((slab, slabIndex) => (
-                    <div
-                      key={slab.id || slabIndex}
-                      className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border text-sm"
-                    >
-                      <div className="flex items-center gap-4">
-                        <span className="text-gray-600">
-                          {slab.minQty}-{slab.maxQty || "∞"} {t("variant_card.pricing_slabs.pieces")}
-                        </span>
-                        <span className="font-medium text-green-600">₹{slab.price}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditSlab(slab)}
-                          className="h-6 w-6 p-0"
-                          disabled={slabLoading}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteSlab(slab)}
-                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                          disabled={slabLoading}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                !showSlabForm && (
-                  <p className="text-xs text-muted-foreground">
-                    {t("variant_card.pricing_slabs.no_slabs")}
-                  </p>
-                )
-              )}
-
-              {/* Add/Edit Slab Form */}
-              {showSlabForm && (
-                <div className="p-3 border rounded-lg bg-blue-50/50 space-y-3">
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs">{t("variant_card.pricing_slabs.min_qty")}</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={slabForm.minQty}
-                        onChange={(e) => setSlabForm({ ...slabForm, minQty: parseInt(e.target.value) || 1 })}
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">{t("variant_card.pricing_slabs.max_qty")}</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={slabForm.maxQty}
-                        onChange={(e) => setSlabForm({ ...slabForm, maxQty: e.target.value })}
-                        className="h-8"
-                        placeholder={t("variant_card.pricing_slabs.unlimited")}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">{t("variant_card.pricing_slabs.price")}</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={slabForm.price}
-                        onChange={(e) => setSlabForm({ ...slabForm, price: e.target.value })}
-                        className="h-8"
-                      />
-                    </div>
+              {/* Pricing Slabs Section */}
+              <div className="space-y-3 border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-4 w-4 text-purple-600" />
+                    <Label className="text-sm font-medium">{t("variant_card.pricing_slabs.title")}</Label>
                   </div>
-                  <div className="flex justify-end gap-2">
+                  {!showSlabForm && (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        setShowSlabForm(false);
                         setEditingSlab(null);
                         setSlabForm({ minQty: 1, maxQty: "", price: "" });
+                        setShowSlabForm(true);
                       }}
-                      className="h-7"
-                      disabled={slabLoading}
+                      className="h-7 text-xs"
                     >
-                      {t("variant_card.pricing_slabs.cancel")}
+                      <Plus className="h-3 w-3 mr-1" />
+                      {t("variant_card.pricing_slabs.add")}
                     </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={editingSlab ? handleUpdateSlab : handleAddSlab}
-                      className="h-7"
-                      disabled={slabLoading}
+                  )}
+                </div>
+
+                {/* Existing Slabs List */}
+                {variantSlabs.length > 0 ? (
+                  <div className="space-y-2">
+                    {variantSlabs.map((slab, slabIndex) => (
+                      <div
+                        key={slab.id || slabIndex}
+                        className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border text-sm"
+                      >
+                        <div className="flex items-center gap-4">
+                          <span className="text-gray-600">
+                            {slab.minQty}-{slab.maxQty || "∞"} {t("variant_card.pricing_slabs.pieces")}
+                          </span>
+                          <span className="font-medium text-green-600">₹{slab.price}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditSlab(slab)}
+                            className="h-6 w-6 p-0"
+                            disabled={slabLoading}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteSlab(slab)}
+                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                            disabled={slabLoading}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  !showSlabForm && (
+                    <p className="text-xs text-muted-foreground">
+                      {t("variant_card.pricing_slabs.no_slabs")}
+                    </p>
+                  )
+                )}
+
+                {/* Add/Edit Slab Form */}
+                {showSlabForm && (
+                  <div className="p-3 border rounded-lg bg-blue-50/50 space-y-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t("variant_card.pricing_slabs.min_qty")}</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={slabForm.minQty}
+                          onChange={(e) => setSlabForm({ ...slabForm, minQty: parseInt(e.target.value) || 1 })}
+                          className="h-8"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t("variant_card.pricing_slabs.max_qty")}</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={slabForm.maxQty}
+                          onChange={(e) => setSlabForm({ ...slabForm, maxQty: e.target.value })}
+                          className="h-8"
+                          placeholder={t("variant_card.pricing_slabs.unlimited")}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t("variant_card.pricing_slabs.price")}</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={slabForm.price}
+                          onChange={(e) => setSlabForm({ ...slabForm, price: e.target.value })}
+                          className="h-8"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowSlabForm(false);
+                          setEditingSlab(null);
+                          setSlabForm({ minQty: 1, maxQty: "", price: "" });
+                        }}
+                        className="h-7"
+                        disabled={slabLoading}
+                      >
+                        {t("variant_card.pricing_slabs.cancel")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={editingSlab ? handleUpdateSlab : handleAddSlab}
+                        className="h-7"
+                        disabled={slabLoading}
+                      >
+                        {slabLoading ? "..." : t("variant_card.pricing_slabs.save")}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Shipping Dimensions Section - Only show when Shiprocket is enabled */}
+            {/* Shipping Dimensions Section - REMOVED as per request */}
+            {false && (
+              <div className="space-y-3 border-t pt-4">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium">{t("variant_card.shipping.title")}</Label>
+                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                    {t("variant_card.shipping.optional")}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="space-y-1">
+                    <Label htmlFor={`shippingLength-${index}`} className="text-xs">
+                      {t("variant_card.shipping.length")}
+                    </Label>
+                    <Input
+                      id={`shippingLength-${index}`}
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={variant.shippingLength || ""}
+                      onChange={(e) => handleInputChange("shippingLength", e.target.value)}
+                      className="h-8"
+                      placeholder="e.g. 10"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor={`shippingBreadth-${index}`} className="text-xs">
+                      {t("variant_card.shipping.breadth")}
+                    </Label>
+                    <Input
+                      id={`shippingBreadth-${index}`}
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={variant.shippingBreadth || ""}
+                      onChange={(e) => handleInputChange("shippingBreadth", e.target.value)}
+                      className="h-8"
+                      placeholder="e.g. 10"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor={`shippingHeight-${index}`} className="text-xs">
+                      {t("variant_card.shipping.height")}
+                    </Label>
+                    <Input
+                      id={`shippingHeight-${index}`}
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={variant.shippingHeight || ""}
+                      onChange={(e) => handleInputChange("shippingHeight", e.target.value)}
+                      className="h-8"
+                      placeholder="e.g. 10"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor={`shippingWeight-${index}`} className="text-xs">
+                      {t("variant_card.shipping.weight")}
+                    </Label>
+                    <Input
+                      id={`shippingWeight-${index}`}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={variant.shippingWeight || ""}
+                      onChange={(e) => handleInputChange("shippingWeight", e.target.value)}
+                      className="h-8"
+                      placeholder="e.g. 0.5"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("variant_card.shipping.hint")}
+                </p>
+              </div>
+            )}
+
+            {/* Redirect URL Section */}
+            <div className="space-y-3 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor={`redirectUrl-${index}`} className="text-sm font-medium">
+                  Redirect URL
+                </Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowUrlSearch(!showUrlSearch)}
+                  className="h-7 text-xs text-primary hover:text-primary hover:bg-primary/5"
+                >
+                  {showUrlSearch ? "Close search" : "Pick from products"}
+                </Button>
+              </div>
+
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    id={`redirectUrl-${index}`}
+                    value={variant.redirectUrl || ""}
+                    onChange={(e) => handleInputChange("redirectUrl", e.target.value)}
+                    className="h-8 pr-8"
+                    placeholder="https://example.com/product/slug?sku=..."
+                  />
+                  {variant.redirectUrl && (
+                    <a
+                      href={variant.redirectUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary"
                     >
-                      {slabLoading ? "..." : t("variant_card.pricing_slabs.save")}
-                    </Button>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {showUrlSearch && (
+                <div className="space-y-2 p-3 bg-gray-50 border rounded-lg animate-in fade-in slide-in-from-top-1">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400" />
+                    <Input
+                      placeholder="Search product to link..."
+                      value={urlSearchQuery}
+                      onChange={(e) => {
+                        setUrlSearchQuery(e.target.value);
+                        // Trigger search on change
+                        if (e.target.value.length > 2) {
+                          setIsSearchingUrl(true);
+                          products.getProducts({ search: e.target.value, limit: 10 })
+                            .then((res: any) => {
+                              if (res.data.success) {
+                                setUrlSearchResults(res.data.data.products);
+                              }
+                            })
+                            .finally(() => setIsSearchingUrl(false));
+                        } else {
+                          setUrlSearchResults([]);
+                        }
+                      }}
+                      className="h-7 pl-7 text-xs"
+                    />
+                  </div>
+
+                  {isSearchingUrl && (
+                    <div className="flex justify-center py-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    </div>
+                  )}
+
+                  <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                    {urlSearchResults.map((prod) => (
+                      <div
+                        key={prod.id}
+                        onClick={() => {
+                          // Construct URL: /product/slug?sku=sku
+                          const slug = prod.slug || prod.name.toLowerCase().replace(/\s+/g, "-");
+                          const sku = prod.variants?.[0]?.sku || "";
+                          const url = `/product/${slug}${sku ? `?sku=${sku}` : ""}`;
+                          handleInputChange("redirectUrl", url);
+                          setShowUrlSearch(false);
+                          setUrlSearchQuery("");
+                          setUrlSearchResults([]);
+                        }}
+                        className="flex items-center gap-2 p-1.5 border rounded-md hover:border-primary hover:bg-white cursor-pointer transition-all"
+                      >
+                        <div className="h-6 w-6 rounded bg-gray-100 flex items-center justify-center border overflow-hidden">
+                          {prod.images?.[0] ? (
+                            <img src={prod.images[0].url} className="h-full w-full object-cover" alt="" />
+                          ) : (
+                            <Package className="h-3 w-3 text-gray-400" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-semibold truncate">{prod.name}</p>
+                          <p className="text-[8px] text-gray-400 truncate">SKU: {prod.variants?.[0]?.sku || "N/A"}</p>
+                        </div>
+                        <Link2 className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100" />
+                      </div>
+                    ))}
+                    {urlSearchQuery.length > 2 && urlSearchResults.length === 0 && !isSearchingUrl && (
+                      <p className="text-[10px] text-center text-gray-400 py-1">No products found</p>
+                    )}
                   </div>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Shipping Dimensions Section - Only show when Shiprocket is enabled */}
-          {shiprocketEnabled && (
+            {/* Image Management Section */}
             <div className="space-y-3 border-t pt-4">
-              <div className="flex items-center gap-2">
-                <Label className="text-sm font-medium">{t("variant_card.shipping.title")}</Label>
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
-                  {t("variant_card.shipping.optional")}
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">{t("variant_card.images.title")}</Label>
+                <Badge variant="outline" className="text-xs">
+                  {currentImages.length}/{maxImages}
                 </Badge>
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="space-y-1">
-                  <Label htmlFor={`shippingLength-${index}`} className="text-xs">
-                    {t("variant_card.shipping.length")}
-                  </Label>
-                  <Input
-                    id={`shippingLength-${index}`}
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={variant.shippingLength || ""}
-                    onChange={(e) => handleInputChange("shippingLength", e.target.value)}
-                    className="h-8"
-                    placeholder="e.g. 10"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor={`shippingBreadth-${index}`} className="text-xs">
-                    {t("variant_card.shipping.breadth")}
-                  </Label>
-                  <Input
-                    id={`shippingBreadth-${index}`}
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={variant.shippingBreadth || ""}
-                    onChange={(e) => handleInputChange("shippingBreadth", e.target.value)}
-                    className="h-8"
-                    placeholder="e.g. 10"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor={`shippingHeight-${index}`} className="text-xs">
-                    {t("variant_card.shipping.height")}
-                  </Label>
-                  <Input
-                    id={`shippingHeight-${index}`}
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={variant.shippingHeight || ""}
-                    onChange={(e) => handleInputChange("shippingHeight", e.target.value)}
-                    className="h-8"
-                    placeholder="e.g. 10"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor={`shippingWeight-${index}`} className="text-xs">
-                    {t("variant_card.shipping.weight")}
-                  </Label>
-                  <Input
-                    id={`shippingWeight-${index}`}
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={variant.shippingWeight || ""}
-                    onChange={(e) => handleInputChange("shippingWeight", e.target.value)}
-                    className="h-8"
-                    placeholder="e.g. 0.5"
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("variant_card.shipping.hint")}
-              </p>
-            </div>
-          )}
 
-          {/* Image Management Section */}
-          <div className="space-y-3 border-t pt-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">{t("variant_card.images.title")}</Label>
-              <Badge variant="outline" className="text-xs">
-                {currentImages.length}/{maxImages}
-              </Badge>
-            </div>
-
-            {/* Upload Area */}
-            {remainingSlots > 0 && (
-              <div
-                {...getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${isDragActive
-                  ? isDragReject
-                    ? "border-red-400 bg-red-50"
-                    : "border-blue-400 bg-blue-50"
-                  : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
-                  } ${isUploading ? "opacity-50 pointer-events-none" : ""} ${remainingSlots <= 0 ? "opacity-50 pointer-events-none" : ""}`}
-              >
-                <input {...getInputProps()} />
-                <div className="flex flex-col items-center space-y-2">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100">
-                    {isUploading ? (
-                      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Plus className="h-6 w-6 text-gray-400" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {isUploading
-                        ? "Uploading..."
-                        : isDragActive
-                          ? isDragReject
-                            ? "Some files are not supported"
-                            : "Drop images here"
-                          : "Add variant images"}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      JPG, PNG, WebP, GIF (max 10MB each) • {remainingSlots}{" "}
-                      slots remaining
-                    </p>
+              {/* Upload Area */}
+              {remainingSlots > 0 && (
+                <div
+                  {...getRootProps()}
+                  className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${isDragActive
+                    ? isDragReject
+                      ? "border-red-400 bg-red-50"
+                      : "border-blue-400 bg-blue-50"
+                    : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                    } ${isUploading ? "opacity-50 pointer-events-none" : ""} ${remainingSlots <= 0 ? "opacity-50 pointer-events-none" : ""}`}
+                >
+                  <input {...getInputProps()} />
+                  <div className="flex flex-col items-center space-y-2">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100">
+                      {isUploading ? (
+                        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Plus className="h-6 w-6 text-gray-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {isUploading
+                          ? "Uploading..."
+                          : isDragActive
+                            ? isDragReject
+                              ? "Some files are not supported"
+                              : "Drop images here"
+                            : "Add variant images"}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        JPG, PNG, WebP, GIF (max 10MB each) • {remainingSlots}{" "}
+                        slots remaining
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Images Grid */}
-            {hasImages && (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-                {currentImages.map((image, imageIndex) => (
-                  <div
-                    key={
-                      image.id || image.tempId || `img-${index}-${imageIndex}`
-                    }
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, imageIndex)}
-                    onDragOver={(e) => handleDragOver(e, imageIndex)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, imageIndex)}
-                    className={`relative rounded-lg overflow-hidden border-2 transition-all cursor-move ${image.isPrimary
-                      ? "border-green-500 ring-2 ring-green-200 shadow-lg"
-                      : "border-gray-200"
-                      } ${draggedImageIndex === imageIndex
-                        ? "opacity-50 scale-95"
-                        : ""
-                      } ${dragOverIndex === imageIndex &&
-                        draggedImageIndex !== imageIndex
-                        ? "border-blue-400 bg-blue-50"
-                        : ""
-                      }`}
-                  >
-                    {/* Image Container */}
-                    <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                      {image.url ? (
-                        <img
-                          src={image.url}
-                          alt={`Variant image ${imageIndex + 1}`}
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            console.error(
-                              `❌ Failed to load image: ${image.url}`
-                            );
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = "none";
-                            const parent = target.parentElement;
-                            if (parent) {
-                              parent.innerHTML = `
+              {/* Images Grid */}
+              {hasImages && (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                  {currentImages.map((image, imageIndex) => (
+                    <div
+                      key={
+                        image.id || image.tempId || `img-${index}-${imageIndex}`
+                      }
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, imageIndex)}
+                      onDragOver={(e) => handleDragOver(e, imageIndex)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, imageIndex)}
+                      className={`relative rounded-lg overflow-hidden border-2 transition-all cursor-move ${image.isPrimary
+                        ? "border-green-500 ring-2 ring-green-200 shadow-lg"
+                        : "border-gray-200"
+                        } ${draggedImageIndex === imageIndex
+                          ? "opacity-50 scale-95"
+                          : ""
+                        } ${dragOverIndex === imageIndex &&
+                          draggedImageIndex !== imageIndex
+                          ? "border-blue-400 bg-blue-50"
+                          : ""
+                        }`}
+                    >
+                      {/* Image Container */}
+                      <div className="aspect-square bg-white border border-gray-200 flex items-center justify-center">
+                        {image.url ? (
+                          <img
+                            src={image.url}
+                            alt={`Variant image ${imageIndex + 1}`}
+                            className="h-full w-full object-contain p-1"
+                            onError={(e) => {
+                              console.error(
+                                `❌ Failed to load image: ${image.url}`
+                              );
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = "none";
+                              const parent = target.parentElement;
+                              if (parent) {
+                                parent.innerHTML = `
                                 <div class="flex flex-col items-center justify-center h-full text-gray-400 p-4">
                                   <svg class="h-8 w-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -1328,78 +1430,79 @@ export default function VariantCard({
                                   <span class="text-xs text-center">Failed to load</span>
                                 </div>
                               `;
-                            }
-                          }}
-                        />
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
-                          <ImageIcon className="h-8 w-8 mb-2" />
-                          <span className="text-xs text-center">No image</span>
-                        </div>
-                      )}
-                    </div>
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
+                            <ImageIcon className="h-8 w-8 mb-2" />
+                            <span className="text-xs text-center">No image</span>
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Badges */}
-                    <div className="absolute top-2 left-2 flex gap-1">
-                      {image.isPrimary && (
-                        <div className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium">
-                          PRIMARY
-                        </div>
-                      )}
-                      {image.isNew && (
-                        <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                          NEW
-                        </div>
-                      )}
-                    </div>
+                      {/* Badges */}
+                      <div className="absolute top-2 left-2 flex gap-1">
+                        {image.isPrimary && (
+                          <div className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium">
+                            PRIMARY
+                          </div>
+                        )}
+                        {image.isNew && (
+                          <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                            NEW
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Action Buttons - Below Image */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-white bg-opacity-90 backdrop-blur-sm p-2">
-                      <div className="flex justify-center space-x-2">
-                        {!image.isPrimary && (
+                      {/* Action Buttons - Below Image */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-white bg-opacity-90 backdrop-blur-sm p-2">
+                        <div className="flex justify-center space-x-2">
+                          {!image.isPrimary && (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleSetPrimary(imageIndex)}
+                              className="h-7 text-xs"
+                              title="Set as primary"
+                            >
+                              <Star className="h-3 w-3 mr-1" />
+                              Primary
+                            </Button>
+                          )}
                           <Button
                             type="button"
-                            variant="secondary"
+                            variant="destructive"
                             size="sm"
-                            onClick={() => handleSetPrimary(imageIndex)}
+                            onClick={() => handleRemoveImage(imageIndex)}
                             className="h-7 text-xs"
-                            title="Set as primary"
+                            title="Remove image"
                           >
-                            <Star className="h-3 w-3 mr-1" />
-                            Primary
+                            <X className="h-3 w-3 mr-1" />
+                            Remove
                           </Button>
-                        )}
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleRemoveImage(imageIndex)}
-                          className="h-7 text-xs"
-                          title="Remove image"
-                        >
-                          <X className="h-3 w-3 mr-1" />
-                          Remove
-                        </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
 
-            {/* No Images State */}
-            {!hasImages && (
-              <div className="text-center py-6 text-gray-500 border border-gray-200 rounded-lg bg-gray-50">
-                <ImageIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                <p className="font-medium">No images uploaded yet</p>
-                <p className="text-sm mt-1">
-                  Upload images using the area above
-                </p>
-              </div>
-            )}
+              {/* No Images State */}
+              {!hasImages && (
+                <div className="text-center py-6 text-gray-500 border border-gray-200 rounded-lg bg-gray-50">
+                  <ImageIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                  <p className="font-medium">No images uploaded yet</p>
+                  <p className="text-sm mt-1">
+                    Upload images using the area above
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
-    </Card>
+        )
+      }
+    </Card >
   );
 }

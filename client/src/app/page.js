@@ -1,4 +1,4 @@
-import { ShopByCategory } from "@/components/sections/ShopByCategory";
+import { OurProducts } from "@/components/sections/OurProducts";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
 import { BestSellers } from "@/components/sections/BestSellers";
 import { NewArrivals } from "@/components/sections/NewArrivals";
@@ -29,8 +29,8 @@ export default function Home() {
         {/* Best Sellers - Popular items */}
         <BestSellers />
 
-        {/* Shop By Category - Visual grid */}
-        <ShopByCategory />
+        {/* Our Products */}
+        <OurProducts />
 
         {/* Trending Products */}
         <TrendingProducts />

@@ -10,6 +10,7 @@ import { getFileUrl } from "../utils/deleteFromS3.js";
 import { processReferralReward } from "./referral.controller.js";
 import { decrypt } from "../utils/encryption.js";
 import { processOrderForShipping } from "../utils/shiprocket.js";
+import { processOrderForParcelX, getParcelXSettings } from "../utils/parcelx.js";
 
 
 async function getPaymentGatewayConfig(userId = null, gateway = "RAZORPAY") {
@@ -486,11 +487,18 @@ export const paymentVerification = asyncHandler(async (req, res) => {
       }
     }
 
-    // Calculate shipping cost based on Shiprocket settings
+    // Calculate shipping cost based on active shipping provider settings
+    const parcelxSettings = await getParcelXSettings();
     const shiprocketSettings = await prisma.shiprocketSettings.findFirst();
-    if (shiprocketSettings) {
-      const threshold = parseFloat(shiprocketSettings.freeShippingThreshold || 0);
-      const charge = parseFloat(shiprocketSettings.shippingCharge || 0);
+    // Default to Shiprocket if ParcelX is not enabled
+    let activeSettings = shiprocketSettings;
+    if (parcelxSettings && parcelxSettings.isEnabled) {
+      activeSettings = parcelxSettings;
+    }
+
+    if (activeSettings) {
+      const threshold = parseFloat(activeSettings.freeShippingThreshold || 0);
+      const charge = parseFloat(activeSettings.shippingCharge || 0);
 
       if (threshold > 0 && subTotal >= threshold) {
         shippingCost = 0;
@@ -775,12 +783,19 @@ export const paymentVerification = asyncHandler(async (req, res) => {
       console.error("Referral reward processing error:", err);
     });
 
-    // Process Shiprocket shipping (outside transaction, non-blocking)
-    // This creates the order in Shiprocket and assigns AWB if enabled
-    processOrderForShipping(result.order.id).catch((err) => {
-      console.error("Shiprocket order processing error:", err);
-      // Non-critical - admin can manually sync later
-    });
+    // Process shipping (outside transaction, non-blocking)
+    const activeParcelxSettings = await getParcelXSettings();
+    if (activeParcelxSettings.isEnabled) {
+      processOrderForParcelX(result.order.id).catch((err) => {
+        console.error("ParcelX order processing error:", err);
+      });
+    } else {
+      // Fallback to Shiprocket
+      processOrderForShipping(result.order.id).catch((err) => {
+        console.error("Shiprocket order processing error:", err);
+        // Non-critical - admin can manually sync later
+      });
+    }
 
     // Send order confirmation email
     try {
@@ -980,7 +995,7 @@ export const getOrderHistory = asyncHandler(async (req, res) => {
           discountValue: parseFloat(order.coupon.discountValue),
         }
         : null,
-      paymentMethod: order.razorpayPayment?.paymentMethod || "ONLINE",
+      paymentMethod: order.paymentMethod === "CASH" ? "COD" : "Already Paid",
       paymentStatus: order.razorpayPayment?.status || order.status,
       items: order.items.map((item) => ({
         id: item.id,
@@ -1153,7 +1168,7 @@ export const getOrderDetails = asyncHandler(async (req, res) => {
     discount: parseFloat(order.discount) || 0,
     // Use the original total stored in the database to preserve historical pricing
     total: parseFloat(order.total),
-    paymentMethod: order.razorpayPayment?.paymentMethod || "ONLINE",
+    paymentMethod: order.paymentMethod === "CASH" ? "COD" : "Already Paid",
     paymentId: order.razorpayPayment?.razorpayPaymentId,
     paymentStatus: order.razorpayPayment?.status || order.status,
     notes: order.notes,
@@ -1673,11 +1688,18 @@ export const createCashOrder = asyncHandler(async (req, res) => {
       });
     }
 
-    // Calculate shipping cost based on Shiprocket settings
+    // Calculate shipping cost based on active shipping provider settings
+    const parcelxSettings = await getParcelXSettings();
     const shiprocketSettings = await prisma.shiprocketSettings.findFirst();
-    if (shiprocketSettings) {
-      const threshold = parseFloat(shiprocketSettings.freeShippingThreshold || 0);
-      const charge = parseFloat(shiprocketSettings.shippingCharge || 0);
+    // Default to Shiprocket if ParcelX is not enabled
+    let activeSettings = shiprocketSettings;
+    if (parcelxSettings && parcelxSettings.isEnabled) {
+      activeSettings = parcelxSettings;
+    }
+
+    if (activeSettings) {
+      const threshold = parseFloat(activeSettings.freeShippingThreshold || 0);
+      const charge = parseFloat(activeSettings.shippingCharge || 0);
 
       if (threshold > 0 && subTotal >= threshold) {
         shippingCost = 0;
@@ -1830,10 +1852,19 @@ export const createCashOrder = asyncHandler(async (req, res) => {
       console.error("Referral reward processing error:", err);
     });
 
-    // Process Shiprocket shipping (outside transaction, non-blocking)
-    processOrderForShipping(result.order.id).catch((err) => {
-      console.error("Shiprocket order processing error:", err);
-    });
+    // Process shipping (outside transaction, non-blocking)
+    const activeParcelxSettings = await getParcelXSettings();
+    if (activeParcelxSettings.isEnabled) {
+      processOrderForParcelX(result.order.id).catch((err) => {
+        console.error("ParcelX order processing error:", err);
+      });
+    } else {
+      // Fallback to Shiprocket
+      processOrderForShipping(result.order.id).catch((err) => {
+        console.error("Shiprocket order processing error:", err);
+        // Non-critical - admin can manually sync later
+      });
+    }
 
     // Send order confirmation email
     try {

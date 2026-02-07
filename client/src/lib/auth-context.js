@@ -363,7 +363,10 @@ export function AuthProvider({ children }) {
 
     // Update profile
     const updateProfile = async (data) => {
-        setLoading(true);
+        // IMPORTANT: don't toggle global `loading` here.
+        // `loading` is used by `ProtectedRoute` as the auth-gating flag, and
+        // setting it during profile updates causes the whole page to flash a
+        // loading screen and can reset local UI state.
         setError(null);
 
         try {
@@ -388,8 +391,6 @@ export function AuthProvider({ children }) {
             console.error("Profile update error:", err);
             setError(err.message || "Failed to update profile");
             throw err;
-        } finally {
-            setLoading(false);
         }
     };
 

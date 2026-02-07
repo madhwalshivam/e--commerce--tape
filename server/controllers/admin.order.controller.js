@@ -4,6 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { prisma } from "../config/db.js";
 import { razorpay } from "../app.js";
 import { cancelShiprocketOrder, getShiprocketSettings } from "../utils/shiprocket.js";
+import { cancelParcelXOrder, getParcelXSettings } from "../utils/parcelx.js";
 
 // Get all orders with pagination, filtering, and sorting
 export const getOrders = asyncHandler(async (req, res, next) => {
@@ -148,14 +149,22 @@ export const getOrders = asyncHandler(async (req, res, next) => {
       : order.couponCode
         ? { code: order.couponCode }
         : null,
-    // Include Shiprocket data
-    shiprocket: {
-      orderId: order.shiprocketOrderId,
-      shipmentId: order.shiprocketShipmentId,
-      awbCode: order.awbCode,
-      courierName: order.courierName,
-      status: order.shiprocketStatus,
+    // Include shipping data
+    shipping: {
+      provider: order.shippingProvider || "SHIPROCKET",
+      shiprocket: {
+        orderId: order.shiprocketOrderId,
+        shipmentId: order.shiprocketShipmentId,
+        awbCode: order.awbCode,
+        courierName: order.courierName,
+        status: order.shiprocketStatus,
+      },
+      parcelx: {
+        waybill: order.parcelxWaybill,
+        status: order.parcelxStatus,
+      },
     },
+
   }));
 
   res.status(200).json(
@@ -322,13 +331,20 @@ export const getOrderById = asyncHandler(async (req, res, next) => {
       : order.couponCode
         ? { code: order.couponCode }
         : null,
-    // Include Shiprocket data
-    shiprocket: {
-      orderId: order.shiprocketOrderId,
-      shipmentId: order.shiprocketShipmentId,
-      awbCode: order.awbCode,
-      courierName: order.courierName,
-      status: order.shiprocketStatus,
+    // Include shipping data
+    shipping: {
+      provider: order.shippingProvider || "SHIPROCKET",
+      shiprocket: {
+        orderId: order.shiprocketOrderId,
+        shipmentId: order.shiprocketShipmentId,
+        awbCode: order.awbCode,
+        courierName: order.courierName,
+        status: order.shiprocketStatus,
+      },
+      parcelx: {
+        waybill: order.parcelxWaybill,
+        status: order.parcelxStatus,
+      },
     },
   };
 
@@ -403,7 +419,20 @@ export const updateOrderStatus = asyncHandler(async (req, res, next) => {
           }
         } catch (error) {
           console.error("Failed to cancel Shiprocket order:", error.message);
-          // Continue with order cancellation even if Shiprocket fails
+        }
+      }
+
+      // Cancel ParcelX order if it exists
+      if (order.parcelxWaybill) {
+        try {
+          const settings = await getParcelXSettings();
+          if (settings.isEnabled) {
+            await cancelParcelXOrder(order.parcelxWaybill);
+            orderData.parcelxStatus = "CANCELLED";
+            console.log(`Admin cancelled ParcelX order ${order.parcelxWaybill}`);
+          }
+        } catch (error) {
+          console.error("Failed to cancel ParcelX order:", error.message);
         }
       }
     }
@@ -1528,4 +1557,50 @@ export const cleanupInvalidPartnerEarnings = asyncHandler(async (req, res) => {
     console.error("Error during cleanup:", error);
     res.status(500).json(new ApiResponsive(500, null, "Error during cleanup"));
   }
+});
+
+export const deleteOrder = asyncHandler(async (req, res, next) => {
+  const { orderId } = req.params;
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+  });
+
+  if (!order) {
+    throw new ApiError(404, "Order not found");
+  }
+
+  // Use transaction to ensure data integrity
+  await prisma.$transaction(async (tx) => {
+    // 1. Handle PhonePeTransaction (if any)
+    // We nullify the orderId to preserve the transaction record but break the link
+    await tx.phonePeTransaction.updateMany({
+      where: { orderId: orderId },
+      data: { orderId: null },
+    });
+
+    // 2. Handle Referral (if any)
+    // We nullify the orderId to preserve the referral record but break the link
+    await tx.referral.updateMany({
+      where: { orderId: orderId },
+      data: { orderId: null },
+    });
+
+    // 3. Delete the Order record
+    // This will trigger cascade deletion for:
+    // OrderItem, RazorpayPayment, Tracking, PartnerEarning, ReturnRequest
+    await tx.order.delete({
+      where: { id: orderId },
+    });
+  });
+
+  console.log(`Order ${orderId} deleted by admin`);
+
+  res.status(200).json(
+    new ApiResponsive(
+      200,
+      null,
+      "Order deleted successfully"
+    )
+  );
 });

@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -38,6 +39,7 @@ import adminReturnRoutes from "./routes/admin.return.routes.js";
 import adminMOQRoutes from "./routes/admin.moq.routes.js";
 import adminPaymentGatewayRoutes from "./routes/admin.payment-gateway.routes.js";
 import adminShiprocketRoutes from "./routes/admin.shiprocket.routes.js";
+import adminParcelXRoutes from "./routes/admin.parcelx.routes.js";
 
 const app = express();
 
@@ -62,29 +64,49 @@ app.use((req, res, next) => {
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
-  : ['https://api.dfixkart.com', 'https://admin.dfixkart.com', 'http://localhost:3000', 'https://localhost:3000', 'http://localhost:5173', 'http://localhost:4173'];
+  : [
+    "https://api.dfixkart.com",
+    "https://admin.dfixkart.com",
+    "http://localhost:3000",
+    "https://localhost:3000",
+    "http://localhost:3001",
+    "https://localhost:3001",
+    "http://localhost:5173",
+    "http://localhost:4173",
+  ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Log all incoming origins for debugging
+    logger("INFO", "CORS REQUEST", { origin, environment: process.env.NODE_ENV });
 
-      if (
-        allowedOrigins.includes(origin) ||
-        process.env.NODE_ENV === "development"
-      ) {
-        callback(null, true);
-      } else {
-        const error = new Error("Not allowed by CORS");
-        logger("ERROR", "CORS BLOCKED", origin);
-        callback(error);
-      }
-    },
-    credentials: true,
-  })
-);
+    // In development, allow all origins
+    if (process.env.NODE_ENV === "development") {
+      logger("INFO", "CORS ALLOWED (development mode)", origin);
+      return callback(null, true);
+    }
 
-app.options("*", cors());
+    if (!origin) {
+      logger("INFO", "CORS ALLOWED (no origin)");
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      logger("INFO", "CORS ALLOWED (in allowed list)", origin);
+      callback(null, true);
+    } else {
+      const error = new Error("Not allowed by CORS");
+      logger("ERROR", "CORS BLOCKED", origin);
+      logger("ERROR", "Allowed origins", allowedOrigins);
+      callback(error);
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+// Ensure preflight responses include the same CORS headers (esp. for credentials)
+app.options("*", cors(corsOptions));
 
 /* -------------------- SECURITY HEADERS -------------------- */
 
@@ -155,9 +177,14 @@ app.use("/api/admin/returns", adminReturnRoutes);
 app.use("/api/admin", adminMOQRoutes);
 app.use("/api/admin", adminPaymentGatewayRoutes);
 app.use("/api/admin/shiprocket", adminShiprocketRoutes);
+app.use("/api/admin/parcelx", adminParcelXRoutes);
+
+import adminVariantRoutes from "./routes/admin.variant.routes.js";
+app.use("/api/admin/variants", adminVariantRoutes);
 
 // Shiprocket webhook (public endpoint)
 app.use("/api/webhooks/shiprocket", adminShiprocketRoutes);
+app.use("/api/webhooks/parcelx", adminParcelXRoutes);
 
 /* -------------------- HEALTH CHECK -------------------- */
 

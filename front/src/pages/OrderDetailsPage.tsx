@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency, debugData, cn } from "@/lib/utils";
+import api from "@/api/api";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/context/LanguageContext";
 import { getImageUrl } from "@/utils/image";
@@ -84,8 +85,19 @@ export default function OrderDetailsPage() {
       orderId?: number;
       shipmentId?: number;
       awbCode?: string;
-      courierName?: string;
       status?: string;
+      courierName?: string;
+    };
+    parcelx?: {
+      waybill?: string;
+      status?: string;
+      courierName?: string;
+      trackingUrl?: string;
+    };
+    shipping?: {
+      provider: string;
+      shiprocket?: any;
+      parcelx?: any;
     };
     shippingCost?: string | number;
     total?: string | number;
@@ -332,6 +344,22 @@ export default function OrderDetailsPage() {
         return "bg-[#FEF2F2] text-[#EF4444] border-[#FEE2E2]";
       default:
         return "bg-[#F3F4F6] text-[#6B7280] border-[#E5E7EB]";
+    }
+  };
+
+  const handleSyncToParcelX = async () => {
+    if (!id) return;
+    try {
+      setIsLoading(true);
+      const response = await api.post(`/api/admin/parcelx/orders/${id}/sync`);
+      if (response.data.success) {
+        toast.success("Order synced to ParcelX successfully");
+        fetchOrderDetails();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to sync to ParcelX");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -595,7 +623,7 @@ export default function OrderDetailsPage() {
               <div className="divide-y divide-[#E5E7EB]">
                 {orderItems.map((item: OrderItem) => (
                   <div key={item.id} className="py-4 flex items-center gap-4">
-                    <div className="h-16 w-16 rounded-lg bg-[#F3F4F6] border border-[#E5E7EB] overflow-hidden flex-shrink-0">
+                    <div className="h-16 w-16 rounded-lg bg-white border border-[#E5E7EB] overflow-hidden flex-shrink-0">
                       <img
                         src={getImageUrl(
                           item.imageUrl ||
@@ -605,7 +633,7 @@ export default function OrderDetailsPage() {
                           null
                         )}
                         alt={item.product?.name || "Product"}
-                        className="h-full w-full object-contain"
+                        className="h-full w-full object-contain p-1"
                         onError={(e) => {
                           e.currentTarget.src =
                             "/images/product-placeholder.jpg";
@@ -1056,6 +1084,75 @@ export default function OrderDetailsPage() {
               </CardContent>
             </Card>
           ) : null}
+
+          {/* ParcelX Information */}
+          {(orderDetails.parcelx || (orderDetails.shipping?.provider === "PARCELX" && orderDetails.shipping?.parcelx)) && (
+            <Card className="bg-[#FFFFFF] border-[#E5E7EB] shadow-[0_1px_2px_rgba(0,0,0,0.04)] rounded-xl">
+              <CardHeader className="px-6 pt-6 pb-4">
+                <CardTitle className="text-lg font-semibold text-[#1F2937] flex items-center">
+                  <Truck className="mr-2 h-5 w-5 text-[#4CAF50]" />
+                  ParcelX Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-6 pb-6">
+                <div className="space-y-3">
+                  {(orderDetails.parcelx?.waybill || orderDetails.shipping?.parcelx?.waybill) && (
+                    <div>
+                      <p className="text-xs text-[#9CA3AF] mb-1">Waybill / Tracking Number</p>
+                      <p className="font-mono text-sm text-[#1F2937] bg-[#F3F4F6] px-2 py-1 rounded border border-[#E5E7EB]">
+                        {orderDetails.parcelx?.waybill || orderDetails.shipping?.parcelx?.waybill}
+                      </p>
+                    </div>
+                  )}
+                  {(orderDetails.parcelx?.status || orderDetails.shipping?.parcelx?.status) && (
+                    <div>
+                      <p className="text-xs text-[#9CA3AF] mb-1">ParcelX Status</p>
+                      <Badge
+                        className={cn(
+                          "text-xs font-medium border",
+                          getStatusBadgeClass(orderDetails.parcelx?.status || orderDetails.shipping?.parcelx?.status)
+                        )}
+                      >
+                        {orderDetails.parcelx?.status || orderDetails.shipping?.parcelx?.status}
+                      </Badge>
+                    </div>
+                  )}
+                  {(orderDetails.parcelx?.courierName || orderDetails.shipping?.parcelx?.courierName) && (
+                    <div>
+                      <p className="text-xs text-[#9CA3AF] mb-1">Courier</p>
+                      <p className="font-medium text-[#1F2937]">
+                        {orderDetails.parcelx?.courierName || orderDetails.shipping?.parcelx?.courierName}
+                      </p>
+                    </div>
+                  )}
+                  {(orderDetails.parcelx?.trackingUrl || orderDetails.shipping?.parcelx?.trackingUrl) && (
+                    <div className="pt-2">
+                      <Button variant="outline" size="sm" asChild className="w-full">
+                        <a href={orderDetails.parcelx?.trackingUrl || orderDetails.shipping?.parcelx?.trackingUrl} target="_blank" rel="noopener noreferrer">
+                          Track on ParcelX
+                        </a>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Sync Button for ParcelX if not synced and status is PROCESSING/SHIPPED */}
+          {orderDetails.status !== "CANCELLED" &&
+            orderDetails.status !== "DELIVERED" &&
+            !(orderDetails.parcelx?.waybill || orderDetails.shipping?.parcelx?.waybill) && (
+              <Card className="bg-[#F0FDF4] border-[#DCFCE7] shadow-sm rounded-xl">
+                <CardContent className="p-6 text-center">
+                  <h3 className="font-semibold text-[#166534] mb-2 text-sm uppercase tracking-wider">ParcelX Fulfullment</h3>
+                  <p className="text-xs text-[#15803d] mb-4">Sync this order to ParcelX to generate waybill and tracking.</p>
+                  <Button onClick={handleSyncToParcelX} className="bg-[#4CAF50] hover:bg-[#43A047] text-white w-full">
+                    Sync to ParcelX
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
           {/* Shiprocket Information */}
           {orderDetails.shiprocket && (

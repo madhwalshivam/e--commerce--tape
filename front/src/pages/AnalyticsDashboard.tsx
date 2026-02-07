@@ -176,10 +176,10 @@ export default function AnalyticsDashboard() {
                             <img
                               src={item.product.image}
                               alt={item.product.name}
-                              className="h-14 w-14 rounded-lg object-cover border border-[#E5E7EB] flex-shrink-0"
+                              className="h-14 w-14 rounded-lg object-contain p-1 bg-white border border-[#E5E7EB] flex-shrink-0"
                             />
                           ) : (
-                            <div className="h-14 w-14 rounded-lg bg-[#F3F4F6] flex items-center justify-center flex-shrink-0 border border-[#E5E7EB]">
+                            <div className="h-14 w-14 rounded-lg bg-white flex items-center justify-center flex-shrink-0 border border-[#E5E7EB]">
                               <Package className="h-6 w-6 text-[#9CA3AF]" />
                             </div>
                           )}
@@ -336,10 +336,10 @@ export default function AnalyticsDashboard() {
                                 <img
                                   src={item.product.image}
                                   alt={item.product.name}
-                                  className="h-16 w-16 rounded-lg object-cover border border-[#E5E7EB] flex-shrink-0"
+                                  className="h-16 w-16 rounded-lg object-contain p-1 bg-white border border-[#E5E7EB] flex-shrink-0"
                                 />
                               ) : (
-                                <div className="h-16 w-16 rounded-lg bg-[#F3F4F6] flex items-center justify-center flex-shrink-0 border border-[#E5E7EB]">
+                                <div className="h-16 w-16 rounded-lg bg-white flex items-center justify-center flex-shrink-0 border border-[#E5E7EB]">
                                   <Package className="h-8 w-8 text-[#9CA3AF]" />
                                 </div>
                               )}

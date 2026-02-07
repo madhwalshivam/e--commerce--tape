@@ -3,6 +3,7 @@ import { ApiResponsive } from "../utils/ApiResponsive.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { prisma } from "../config/db.js";
 import { getShiprocketSettings, processShiprocketReturn } from "../utils/shiprocket.js";
+import { getParcelXSettings, processOrderForParcelX } from "../utils/parcelx.js";
 
 // Get return settings
 export const getReturnSettings = asyncHandler(async (req, res) => {
@@ -342,6 +343,14 @@ export const updateReturnRequestStatus = asyncHandler(async (req, res) => {
         processShiprocketReturn(returnRequest.orderId, returnRequest.reason).catch((err) => {
           console.error("Shiprocket return processing error:", err.message);
         });
+      }
+
+      // Check ParcelX for return processing (using manifestation if reverse supported, otherwise just status update)
+      const parcelxSettings = await getParcelXSettings();
+      if (parcelxSettings.isEnabled) {
+        // ParcelX specific return logic would go here
+        // For now, we've updated the order status already
+        console.log("ParcelX enabled for return - manual reverse pickup might be required");
       }
     } catch (err) {
       console.log("Return processing error:", err.message);

@@ -275,11 +275,11 @@ export const products = {
     return api.post(`/api/admin/products/${productId}/variants`, variantData);
   },
   updateVariant: (variantId: string, variantData: ProductVariantData) => {
-    return api.patch(`/api/admin/variants/${variantId}`, variantData);
+    return api.patch(`/api/admin/product-variants/${variantId}`, variantData);
   },
   deleteVariant: (variantId: string, force: boolean = false) => {
     return api.delete(
-      `/api/admin/variants/${variantId}${force ? "?force=true" : ""}`
+      `/api/admin/product-variants/${variantId}${force ? "?force=true" : ""}`
     );
   },
   getVariantsByProductId: (productId: string) => {
@@ -300,23 +300,23 @@ export const products = {
       formData.append("isPrimary", isPrimary.toString());
     }
 
-    return api.post(`/api/admin/variants/${variantId}/images`, formData, {
+    return api.post(`/api/admin/product-variants/${variantId}/images`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
   },
   deleteVariantImage: (imageId: string) => {
-    return api.delete(`/api/admin/variants/images/${imageId}`);
+    return api.delete(`/api/admin/product-variants/images/${imageId}`);
   },
   setVariantImageAsPrimary: (imageId: string) => {
-    return api.patch(`/api/admin/variants/images/${imageId}/set-primary`);
+    return api.patch(`/api/admin/product-variants/images/${imageId}/set-primary`);
   },
   reorderVariantImages: (
     variantId: string,
     imageOrders: Array<{ imageId: string; order: number }>
   ) => {
-    return api.patch(`/api/admin/variants/${variantId}/images/reorder`, {
+    return api.patch(`/api/admin/product-variants/${variantId}/images/reorder`, {
       imageOrders,
     });
   },
@@ -539,6 +539,9 @@ export const orders = {
       console.error("Error getting order stats:", error);
       throw error;
     }
+  },
+  deleteOrder: (orderId: string) => {
+    return api.delete(`/api/admin/orders/${orderId}`);
   },
 };
 

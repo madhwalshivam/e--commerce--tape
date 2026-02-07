@@ -104,14 +104,14 @@ router.post(
 );
 
 router.patch(
-  "/variants/:variantId",
+  "/product-variants/:variantId",
   verifyAdminJWT,
   hasPermission("products", "update"),
   updateProductVariant
 );
 
 router.delete(
-  "/variants/:variantId",
+  "/product-variants/:variantId",
   verifyAdminJWT,
   hasPermission("products", "update"),
   deleteProductVariant
@@ -119,7 +119,7 @@ router.delete(
 
 // Variant image routes
 router.post(
-  "/variants/:variantId/images",
+  "/product-variants/:variantId/images",
   verifyAdminJWT,
   hasPermission("products", "update"),
   uploadFiles.single("image"),
@@ -127,21 +127,21 @@ router.post(
 );
 
 router.delete(
-  "/variants/images/:imageId",
+  "/product-variants/images/:imageId",
   verifyAdminJWT,
   hasPermission("products", "update"),
   deleteVariantImage
 );
 
 router.patch(
-  "/variants/images/:imageId/set-primary",
+  "/product-variants/images/:imageId/set-primary",
   verifyAdminJWT,
   hasPermission("products", "update"),
   setVariantImageAsPrimary
 );
 
 router.patch(
-  "/variants/:variantId/images/reorder",
+  "/product-variants/:variantId/images/reorder",
   verifyAdminJWT,
   hasPermission("products", "update"),
   reorderVariantImages

@@ -25,6 +25,7 @@ import {
   Layers,
   Eye,
   Truck,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SafeRender } from "@/components/SafeRender";
@@ -250,7 +251,7 @@ export default function DashboardLayout() {
         support: true,
         settings: false,
       });
-    } else if (path.startsWith("/settings") || path.startsWith("/moq-settings") || path.startsWith("/pricing-slabs") || path.startsWith("/payment-settings") || path.startsWith("/payment-gateway-settings") || path.startsWith("/price-visibility-settings") || path.startsWith("/shiprocket-settings") || path.startsWith("/shipping-settings")) {
+    } else if (path.startsWith("/settings") || path.startsWith("/moq-settings") || path.startsWith("/pricing-slabs") || path.startsWith("/payment-settings") || path.startsWith("/payment-gateway-settings") || path.startsWith("/price-visibility-settings") || path.startsWith("/shiprocket-settings") || path.startsWith("/parcelx-settings") || path.startsWith("/shipping-settings")) {
       setOpenSections({
         products: false,
         orders: false,
@@ -323,7 +324,7 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
+    <div className="h-screen w-full overflow-hidden bg-background">
       {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex fixed left-0 top-0 h-full w-[240px] flex-col bg-[#0A3B3F]    z-30 flex-shrink-0">
         <div className="flex h-16 items-center   px-4">
@@ -375,6 +376,18 @@ export default function DashboardLayout() {
                       Action.CREATE
                     ),
                   },
+                  {
+                    href: "/variants",
+                    title: "Variant Groups",
+                    icon: <Layers className="h-3 w-3" />,
+                    hasPermission: hasPermissionFor(
+                      admin,
+                      Resource.PRODUCTS,
+                      Action.UPDATE
+                    ),
+                  },
+
+
                   {
                     href: "/brands",
                     title: t("nav.brands"),
@@ -604,8 +617,8 @@ export default function DashboardLayout() {
                     ),
                   },
                   {
-                    href: "/shiprocket-settings",
-                    title: t("nav.shiprocket"),
+                    href: "/parcelx-settings",
+                    title: t("nav.parcelx"),
                     icon: <Truck className="h-3 w-3" />,
                     hasPermission: hasPermissionFor(
                       admin,
@@ -632,6 +645,12 @@ export default function DashboardLayout() {
                       Resource.SETTINGS,
                       Action.UPDATE
                     ),
+                  },
+                  {
+                    href: "/change-password",
+                    title: t("nav.change_password"),
+                    icon: <Lock className="h-3 w-3" />,
+                    hasPermission: true,
                   },
                 ]}
               />
@@ -958,8 +977,8 @@ export default function DashboardLayout() {
                     ),
                   },
                   {
-                    href: "/shiprocket-settings",
-                    title: t("nav.shiprocket"),
+                    href: "/parcelx-settings",
+                    title: t("nav.parcelx"),
                     icon: <Truck className="h-3 w-3" />,
                     hasPermission: hasPermissionFor(
                       admin,
@@ -986,6 +1005,12 @@ export default function DashboardLayout() {
                       Resource.SETTINGS,
                       Action.UPDATE
                     ),
+                  },
+                  {
+                    href: "/change-password",
+                    title: t("nav.change_password"),
+                    icon: <Lock className="h-3 w-3" />,
+                    hasPermission: true,
                   },
                 ]}
               />
@@ -1027,7 +1052,7 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main content */}
-      <div className="flex w-full flex-col flex-1 min-h-0 lg:ml-[240px]">
+      <div className="flex flex-col h-full min-h-0 lg:ml-[240px]">
         {/* Topbar */}
         <header className="flex lg:hidden h-16 items-center justify-between  px-4 lg:px-6 bg-[#0A3B3F] sticky top-0 z-20">
           <div className="flex items-center lg:hidden">

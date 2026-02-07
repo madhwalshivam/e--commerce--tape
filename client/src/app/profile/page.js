@@ -9,11 +9,14 @@ import Link from "next/link";
 import { formatPrice } from "@/lib/products";
 
 function ProfileContent() {
-    const { user, isAuthenticated, logout } = useAuth();
+    const { user, isAuthenticated, logout, updateProfile } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const tabParam = searchParams.get("tab");
     const [activeTab, setActiveTab] = useState(tabParam || "orders");
+    const [isSavingAccount, setIsSavingAccount] = useState(false);
+    const [accountMessage, setAccountMessage] = useState({ type: "", text: "" });
+    const [accountForm, setAccountForm] = useState({ name: "", phone: "" });
 
     // Update active tab when URL parameter changes
     useEffect(() => {
@@ -21,6 +24,14 @@ function ProfileContent() {
             setActiveTab(tabParam);
         }
     }, [tabParam]);
+
+    // Keep account form in sync with user (for real-time UI updates)
+    useEffect(() => {
+        setAccountForm({
+            name: user?.name || "",
+            phone: user?.phone || "",
+        });
+    }, [user]);
 
     // Update URL when tab changes internally
     const handleTabChange = (tabId) => {
@@ -59,7 +70,9 @@ function ProfileContent() {
                                     {user?.name?.charAt(0) || "U"}
                                 </div>
                                 <h2 className="font-display font-bold text-lg">{user?.name || "User"}</h2>
-                                <p className="text-sm text-muted-foreground">{user?.email}</p>
+                                <p className="text-sm text-muted-foreground truncate" title={user?.email || ""}>
+                                    {user?.email}
+                                </p>
                             </div>
 
                             {/* Navigation */}
@@ -193,13 +206,46 @@ function ProfileContent() {
                                 <h1 className="font-display text-2xl font-bold mb-6">Account Details</h1>
 
                                 <div className="bg-white rounded-2xl p-6">
-                                    <form className="space-y-6">
+                                    <form
+                                        className="space-y-6"
+                                        onSubmit={async (e) => {
+                                            e.preventDefault();
+                                            setIsSavingAccount(true);
+                                            setAccountMessage({ type: "", text: "" });
+                                            try {
+                                                await updateProfile({
+                                                    name: accountForm.name,
+                                                    phone: accountForm.phone,
+                                                    profileImage: null,
+                                                });
+                                                setAccountMessage({ type: "success", text: "Profile updated successfully" });
+                                            } catch (err) {
+                                                setAccountMessage({
+                                                    type: "error",
+                                                    text: err?.message || "Failed to update profile",
+                                                });
+                                            } finally {
+                                                setIsSavingAccount(false);
+                                            }
+                                        }}
+                                    >
+                                        {accountMessage.text && (
+                                            <div
+                                                className={`p-3 rounded-xl text-sm ${accountMessage.type === "success"
+                                                    ? "bg-green-50 text-green-800 border border-green-200"
+                                                    : "bg-red-50 text-red-800 border border-red-200"
+                                                    }`}
+                                            >
+                                                {accountMessage.text}
+                                            </div>
+                                        )}
                                         <div className="grid md:grid-cols-2 gap-6">
                                             <div>
                                                 <label className="block text-sm font-medium mb-2">Full Name</label>
                                                 <input
                                                     type="text"
-                                                    defaultValue={user?.name || ""}
+                                                    value={accountForm.name}
+                                                    onChange={(e) => setAccountForm((p) => ({ ...p, name: e.target.value }))}
                                                     className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                                                 />
                                             </div>
@@ -208,6 +254,7 @@ function ProfileContent() {
                                                 <input
                                                     type="email"
                                                     defaultValue={user?.email || ""}
+                                                    readOnly
                                                     className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                                                 />
                                             </div>
@@ -215,7 +262,8 @@ function ProfileContent() {
                                                 <label className="block text-sm font-medium mb-2">Phone</label>
                                                 <input
                                                     type="tel"
-                                                    defaultValue={user?.phone || ""}
+                                                    value={accountForm.phone}
+                                                    onChange={(e) => setAccountForm((p) => ({ ...p, phone: e.target.value }))}
                                                     placeholder="+91 9876543210"
                                                     className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                                                 />
@@ -244,8 +292,8 @@ function ProfileContent() {
                                             </div>
                                         </div>
 
-                                        <Button size="lg" className="rounded-full px-8">
-                                            Save Changes
+                                        <Button size="lg" className="rounded-full px-8" disabled={isSavingAccount}>
+                                            {isSavingAccount ? "Saving..." : "Save Changes"}
                                         </Button>
                                     </form>
                                 </div>

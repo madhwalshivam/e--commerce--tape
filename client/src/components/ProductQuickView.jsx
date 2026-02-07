@@ -23,7 +23,7 @@ export default function ProductQuickView({ product, open, onOpenChange }) {
   const variants = product.variants || [];
   const hasVariants = variants.length > 0;
   const activeVariant = selectedVariant || variants[0];
-  
+
   const price = activeVariant?.salePrice || activeVariant?.price || product.salePrice || product.price || 0;
   const originalPrice = activeVariant?.price || product.price || 0;
   const hasDiscount = originalPrice > price;
@@ -45,7 +45,7 @@ export default function ProductQuickView({ product, open, onOpenChange }) {
         <DialogHeader className="sr-only">
           <DialogTitle>{product.name}</DialogTitle>
         </DialogHeader>
-        
+
         <button onClick={() => onOpenChange(false)} className="absolute right-4 top-4 z-10 rounded-full bg-white/80 p-2 hover:bg-white">
           <X className="h-4 w-4" />
         </button>
@@ -65,7 +65,7 @@ export default function ProductQuickView({ product, open, onOpenChange }) {
           <div className="p-6 flex flex-col">
             <div className="flex-1">
               <h2 className="text-xl font-bold mb-2">{product.name}</h2>
-              
+
               {/* Rating */}
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex text-yellow-400">
@@ -96,13 +96,12 @@ export default function ProductQuickView({ product, open, onOpenChange }) {
                       <button
                         key={variant.id}
                         onClick={() => setSelectedVariant(variant)}
-                        className={`px-3 py-1.5 text-sm border rounded-md transition-colors ${
-                          (selectedVariant?.id || variants[0].id) === variant.id
+                        className={`px-3 py-1.5 text-sm border rounded-md transition-colors ${(selectedVariant?.id || variants[0].id) === variant.id
                             ? "border-primary bg-primary/5 text-primary"
                             : "border-gray-200 hover:border-gray-300"
-                        }`}
+                          }`}
                       >
-                        {variant.name || variant.sku}
+                        {variant.name}
                       </button>
                     ))}
                   </div>
@@ -113,15 +112,15 @@ export default function ProductQuickView({ product, open, onOpenChange }) {
               <div className="mb-6">
                 <label className="block text-sm font-medium mb-2">Quantity</label>
                 <div className="flex items-center gap-3">
-                  <button 
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))} 
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     className="w-10 h-10 flex items-center justify-center border rounded-md hover:bg-gray-50"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
                   <span className="w-12 text-center font-medium">{quantity}</span>
-                  <button 
-                    onClick={() => setQuantity(quantity + 1)} 
+                  <button
+                    onClick={() => setQuantity(quantity + 1)}
                     className="w-10 h-10 flex items-center justify-center border rounded-md hover:bg-gray-50"
                   >
                     <Plus className="h-4 w-4" />

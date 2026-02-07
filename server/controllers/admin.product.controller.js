@@ -218,46 +218,52 @@ export const getProducts = asyncHandler(async (req, res, next) => {
 
   // Format the response data
   const formattedProducts = products.map((product) => {
-    // Add image URLs and clean up the data
-    return {
-      ...product,
-      // Extract categories into a more usable format
-      categories: product.categories.map((pc) => ({
-        id: pc.category.id,
-        name: pc.category.name,
-        description: pc.category.description,
-        image: pc.category.image ? getFileUrl(pc.category.image) : null,
-        slug: pc.category.slug,
-        isPrimary: pc.isPrimary,
-      })),
-      primaryCategory:
-        product.categories.find((pc) => pc.isPrimary)?.category ||
-        (product.categories.length > 0 ? product.categories[0].category : null),
-      images: product.images.map((image) => ({
-        ...image,
-        url: getFileUrl(image.url),
-      })),
-      variants: product.variants.map((variant) => ({
-        ...variant,
-        color: variant.color
-          ? {
-            ...variant.color,
-            image: variant.color.image
-              ? getFileUrl(variant.color.image)
-              : null,
-          }
-          : null,
-        size: variant.size ? variant.size : null,
-        images: variant.images
-          ? variant.images
-            .sort((a, b) => a.order - b.order)
-            .map((image) => ({
+    try {
+      const {
+        categories: rawCategories,
+        images: rawImages,
+        variants: rawVariants,
+        _count,
+        ...productData
+      } = product;
+
+      return {
+        ...productData,
+        categories: (rawCategories || []).map((pc) => ({
+          id: pc.category?.id,
+          name: pc.category?.name,
+          slug: pc.category?.slug,
+          isPrimary: pc.isPrimary,
+        })),
+        primaryCategory:
+          (rawCategories || []).find((pc) => pc.isPrimary)?.category ||
+          (rawCategories && rawCategories.length > 0 ? rawCategories[0].category : null),
+        images: (rawImages || []).map((image) => ({
+          ...image,
+          url: getFileUrl(image.url),
+        })),
+        variants: (rawVariants || []).map((variant) => {
+          const formatted = formatVariantWithAttributes(variant);
+          return {
+            ...formatted,
+            images: (variant.images || []).map((image) => ({
               ...image,
               url: getFileUrl(image.url),
-            }))
-          : [],
-      })),
-    };
+            })),
+          };
+        }),
+        reviewCount: _count?.reviews || 0,
+      };
+    } catch (err) {
+      console.error(`[ERROR] Formatting product ${product.id}:`, err);
+      return {
+        ...product,
+        error: 'Formatting error',
+        categories: [],
+        images: [],
+        variants: []
+      };
+    }
   });
 
   res.status(200).json(
@@ -320,6 +326,26 @@ export const getProductById = asyncHandler(async (req, res, next) => {
         },
         orderBy: { createdAt: "desc" },
       },
+      variantGroupItems: {
+        include: {
+          variantGroup: {
+            include: {
+              items: {
+                include: {
+                  product: {
+                    include: {
+                      images: {
+                        orderBy: { order: "asc" },
+                      },
+                    },
+                  },
+                },
+                orderBy: { order: "asc" },
+              },
+            },
+          },
+        },
+      },
     },
   });
 
@@ -328,51 +354,111 @@ export const getProductById = asyncHandler(async (req, res, next) => {
   }
 
   // Format the response data
-  const formattedProduct = {
-    ...product,
-    // Extract categories into a more usable format
-    categories: product.categories.map((pc) => ({
-      id: pc.category.id,
-      name: pc.category.name,
-      description: pc.category.description,
-      image: pc.category.image ? getFileUrl(pc.category.image) : null,
-      slug: pc.category.slug,
-      isPrimary: pc.isPrimary,
-    })),
-    primaryCategory:
-      product.categories.find((pc) => pc.isPrimary)?.category ||
-      (product.categories.length > 0 ? product.categories[0].category : null),
-    images: product.images.map((image) => ({
-      ...image,
-      url: getFileUrl(image.url),
-    })),
-    variants: product.variants.map((variant) => {
-      const formatted = formatVariantWithAttributes(variant);
-      return {
-        ...formatted,
-        images: variant.images
-          ? variant.images.map((image) => ({
+  try {
+    const {
+      categories: rawCategories,
+      images: rawImages,
+      variants: rawVariants,
+      variantGroupItems: rawVGItems,
+      ...productData
+    } = product;
+
+    const formattedProduct = {
+      ...productData,
+      // Fix nested tags if they exist
+      tags: Array.isArray(product.tags)
+        ? product.tags.flatMap(t => {
+          try {
+            let current = t;
+            // Clean up potentially multiple layers of stringification
+            while (typeof current === 'string' && (current.startsWith('[') || current.startsWith('"['))) {
+              const baba = JSON.parse(current);
+              if (baba === current) break;
+              current = baba;
+            }
+            return Array.isArray(current) ? current : [current];
+          } catch (e) {
+            return [t];
+          }
+        }).filter(t => t && t !== '[]' && t !== '')
+        : [],
+      // 2. Format categories
+      categories: (rawCategories || []).map((pc) => ({
+        id: pc.category?.id,
+        name: pc.category?.name,
+        description: pc.category?.description,
+        image: pc.category?.image ? getFileUrl(pc.category.image) : null,
+        slug: pc.category?.slug,
+        isPrimary: pc.isPrimary,
+      })),
+      primaryCategory:
+        (rawCategories || []).find((pc) => pc.isPrimary)?.category ||
+        (rawCategories && rawCategories.length > 0 ? rawCategories[0].category : null),
+
+      // 3. Format primary images
+      images: (rawImages || []).map((image) => ({
+        ...image,
+        url: getFileUrl(image.url),
+      })),
+
+      // 4. Format variations
+      variants: (rawVariants || []).map((variant) => {
+        const formatted = formatVariantWithAttributes(variant);
+        return {
+          ...formatted,
+          images: (variant.images || []).map((image) => ({
             ...image,
             url: getFileUrl(image.url),
-          }))
-          : [],
-      };
-    }),
-    // Include SEO fields
-    metaTitle: product.metaTitle || product.name,
-    metaDescription: product.metaDescription || product.description,
-    keywords: product.keywords || "",
-  };
+          })),
+        };
+      }),
 
-  res
-    .status(200)
-    .json(
+      // 5. Format Variant Group (Linked products)
+      variantGroup: rawVGItems?.[0]?.variantGroup ? {
+        id: rawVGItems[0].variantGroup.id,
+        name: rawVGItems[0].variantGroup.name,
+        type: rawVGItems[0].variantGroup.type || "Color",
+        items: (rawVGItems[0].variantGroup.items || []).map(item => ({
+          id: item.id,
+          productId: item.productId,
+          label: item.label,
+          order: item.order,
+          isDefault: item.isDefault,
+          product: item.product ? {
+            id: item.product.id,
+            name: item.product.name,
+            slug: item.product.slug,
+            images: (item.product.images || []).map(img => ({
+              id: img.id,
+              url: getFileUrl(img.url),
+              isPrimary: img.isPrimary
+            }))
+          } : null
+        }))
+      } : null,
+
+      // 6. Include SEO fields
+      metaTitle: product.metaTitle || product.name,
+      metaDescription: product.metaDescription || product.description,
+      keywords: product.keywords || "",
+    };
+
+    res.status(200).json(
       new ApiResponsive(
         200,
         { product: formattedProduct },
         "Product fetched successfully"
       )
     );
+  } catch (error) {
+    console.error(`[CRITICAL ERROR] getProductById formatting failed:`, error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error in formatting product details",
+      error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined
+    });
+  }
 });
 
 // Create a new product
@@ -652,18 +738,13 @@ export const createProduct = asyncHandler(async (req, res, next) => {
           );
         }
 
-        // Auto-generate SKU if not provided or if it's a placeholder
-        let variantSku = variant.sku;
-        if (
-          !variantSku ||
-          variantSku.trim() === "" ||
-          variantSku === "-VAN-50g" ||
-          variantSku === "-CHO-250g"
-        ) {
-          variantSku = generateSKU(
-            productInfo,
-            variantSuffix.replace(/^-/, "")
-          );
+        // Use provided SKU or keep as-is
+        let variantSku = variant.sku || "";
+
+        if (!variantSku || variantSku.trim() === "") {
+          // If absolutely no SKU, generate one only as a fallback
+          const { generateSKU } = await import("../utils/generateSKU.js");
+          variantSku = generateSKU(productInfo, "VAR", Math.floor(Math.random() * 100));
         }
 
         // Check if this SKU already exists
@@ -671,6 +752,7 @@ export const createProduct = asyncHandler(async (req, res, next) => {
           where: { sku: variantSku },
         });
 
+        /* Overriding manual SKU on collision is disabled to respect user input
         if (existingSku) {
           // Use our utility to generate a completely new SKU
           variantSku = generateSKU(
@@ -679,6 +761,7 @@ export const createProduct = asyncHandler(async (req, res, next) => {
             Math.floor(Math.random() * 100)
           );
         }
+        */
 
         const createdVariant = await prisma.productVariant.create({
           data: {
@@ -688,6 +771,7 @@ export const createProduct = asyncHandler(async (req, res, next) => {
             salePrice: variant.salePrice ? parseFloat(variant.salePrice) : null,
             quantity: parseInt(variant.quantity || 0),
             isActive: variant.isActive !== undefined ? variant.isActive : true,
+            redirectUrl: variant.redirectUrl || null,
             attributes:
               attributeValueIds.length > 0
                 ? {
@@ -760,10 +844,12 @@ export const createProduct = asyncHandler(async (req, res, next) => {
           where: { sku: defaultSku },
         });
 
+        /* Overriding manual SKU on collision is disabled
         if (existingSku) {
           // Generate a new unique SKU
           defaultSku = generateSKU(productInfo, "DEFAULT", Math.floor(Math.random() * 100));
         }
+        */
 
         // Ensure price, salePrice, and quantity are properly parsed
         const price = req.body.price ? parseFloat(req.body.price) : 0;
@@ -1075,6 +1161,9 @@ export const createProduct = asyncHandler(async (req, res, next) => {
 // Update a product
 export const updateProduct = asyncHandler(async (req, res, next) => {
   const { productId } = req.params;
+  console.log(`[DEBUG] updateProduct called for ID: ${productId}`);
+  console.log(`[DEBUG] Body Keys: ${Object.keys(req.body).join(", ")}`);
+
   const {
     name,
     description,
@@ -1322,37 +1411,17 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
         // Get existing variant IDs to determine which to update/delete
         const existingVariantIds = product.variants.map((v) => v.id);
 
-        // Get variant IDs that exist in the updated data (only valid DB IDs, not temporary ones)
+        // Get variant IDs that exist in the updated data (only valid DB IDs)
         const updatedVariantIds = variants
           .filter(
-            (v) => v.id && !v.id.startsWith("new-") && !v.id.startsWith("field")
+            (v) => v.id && !v.id.startsWith("new-") && !v.id.startsWith("temp-")
           )
           .map((v) => v.id);
 
-        // Extract existingVariantIds from the request body if provided
-        // This helps synchronize frontend and backend state when variants are removed
-        let requestExistingVariantIds = [];
-        if (req.body.existingVariantIds) {
-          try {
-            requestExistingVariantIds = JSON.parse(req.body.existingVariantIds);
-          } catch (e) {
-            // If parsing fails, use the updatedVariantIds instead
-            requestExistingVariantIds = updatedVariantIds;
-          }
-        }
-
-        // If request explicitly provides existingVariantIds, use those to determine what to delete
-        // This helps when frontend has tracked variant removals
-        const variantIdsToDelete =
-          requestExistingVariantIds.length > 0
-            ? // Delete only variants that exist in DB but not in the request's existingVariantIds
-            existingVariantIds.filter(
-              (id) => !requestExistingVariantIds.includes(id)
-            )
-            : // Fallback to the traditional approach - delete variants not in the updated list
-            existingVariantIds.filter(
-              (id) => !updatedVariantIds.includes(id)
-            );
+        // All existing variants that are NOT in the updated list should be deleted (or Deactivated)
+        const variantIdsToDelete = existingVariantIds.filter(
+          (id) => !updatedVariantIds.includes(id)
+        );
 
         // Delete removed variants safely
         if (variantIdsToDelete.length > 0) {
@@ -1498,40 +1567,12 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
           if (isExistingVariant && variant.id) {
             // Update existing variant
             // Auto-generate SKU if not provided
-            let variantSku = variant.sku;
-            if (
-              !variantSku ||
-              variantSku.trim() === "" ||
-              variantSku === "-VAN-50g" ||
-              variantSku === "-CHO-250g"
-            ) {
-              // Generate SKU suffix from attributes if available
-              let suffix = "";
-              if (
-                variant.attributeValueIds &&
-                Array.isArray(variant.attributeValueIds) &&
-                variant.attributeValueIds.length > 0
-              ) {
-                try {
-                  const { generateSKUSuffixFromAttributes } = await import(
-                    "../utils/variant-attributes.js"
-                  );
-                  suffix = await generateSKUSuffixFromAttributes(
-                    variant.attributeValueIds,
-                    prisma
-                  );
-                } catch (error) {
-                  console.error(
-                    "Error generating SKU suffix from attributes:",
-                    error
-                  );
-                }
-              }
+            // Use provided SKU or keep as-is
+            let variantSku = variant.sku || "";
 
-              const randomSuffix = Math.floor(Math.random() * 100)
-                .toString()
-                .padStart(2, "0");
-              variantSku = `${baseSku}${suffix}-${randomSuffix}`;
+            if (!variantSku || variantSku.trim() === "") {
+              const randomSuffix = Math.floor(Math.random() * 100).toString().padStart(2, "0");
+              variantSku = `${baseSku}-${randomSuffix}`;
             }
 
             // Check if this SKU already exists
@@ -1542,6 +1583,7 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
               },
             });
 
+            /* Overriding manual SKU on collision is disabled to respect user input
             if (existingSku) {
               // Add a random suffix if auto-generated SKU already exists
               const randomSuffix = Math.floor(Math.random() * 1000)
@@ -1549,6 +1591,7 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
                 .padStart(3, "0");
               variantSku = `${variantSku}-${randomSuffix}`;
             }
+            */
 
             // Better error handling for variant price parsing
             let parsedPrice = 0;
@@ -1674,6 +1717,7 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
               quantity: parsedQuantity,
               isActive:
                 variant.isActive !== undefined ? variant.isActive : true,
+              redirectUrl: variant.redirectUrl !== undefined ? variant.redirectUrl : undefined,
             };
 
             // Handle attributes if provided
@@ -1763,40 +1807,12 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
           } else {
             // Create new variant
             // Auto-generate SKU if not provided
-            let variantSku = variant.sku;
-            if (
-              !variantSku ||
-              variantSku.trim() === "" ||
-              variantSku === "-VAN-50g" ||
-              variantSku === "-CHO-250g"
-            ) {
-              // Generate SKU suffix from attributes if available
-              let suffix = "";
-              if (
-                variant.attributeValueIds &&
-                Array.isArray(variant.attributeValueIds) &&
-                variant.attributeValueIds.length > 0
-              ) {
-                try {
-                  const { generateSKUSuffixFromAttributes } = await import(
-                    "../utils/variant-attributes.js"
-                  );
-                  suffix = await generateSKUSuffixFromAttributes(
-                    variant.attributeValueIds,
-                    prisma
-                  );
-                } catch (error) {
-                  console.error(
-                    "Error generating SKU suffix from attributes:",
-                    error
-                  );
-                }
-              }
+            // Use provided SKU or keep as-is
+            let variantSku = variant.sku || "";
 
-              const randomSuffix = Math.floor(Math.random() * 100)
-                .toString()
-                .padStart(2, "0");
-              variantSku = `${baseSku}${suffix}-${randomSuffix}`;
+            if (!variantSku || variantSku.trim() === "") {
+              const randomSuffix = Math.floor(Math.random() * 100).toString().padStart(2, "0");
+              variantSku = `${baseSku}-${randomSuffix}`;
             }
 
             // Check if this SKU already exists
@@ -1804,6 +1820,7 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
               where: { sku: variantSku },
             });
 
+            /* Overriding manual SKU on collision is disabled to respect user input
             if (existingSku) {
               // Add a random suffix if auto-generated SKU already exists
               const randomSuffix = Math.floor(Math.random() * 1000)
@@ -1811,6 +1828,7 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
                 .padStart(3, "0");
               variantSku = `${variantSku}-${randomSuffix}`;
             }
+            */
 
             // Better error handling for variant price parsing
             let parsedPrice = 0;
@@ -1867,6 +1885,7 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
               quantity: parsedQuantity,
               isActive:
                 variant.isActive !== undefined ? variant.isActive : true,
+              redirectUrl: variant.redirectUrl || null,
             };
 
             // Handle attributes if provided
@@ -2003,6 +2022,7 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
               salePrice: parsedSalePrice,
               quantity: parsedQuantity,
               isActive: true,
+              redirectUrl: req.body.redirectUrl || null,
               // Add shipping dimensions for simple product (default variant)
               shippingLength: req.body.shippingLength ? parseFloat(req.body.shippingLength) : null,
               shippingBreadth: req.body.shippingBreadth ? parseFloat(req.body.shippingBreadth) : null,
@@ -2266,6 +2286,10 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
 
           // Update the single variant (for simple product)
           if (product.variants && product.variants.length > 0) {
+            // Include redirectUrl in simple product update
+            if (req.body.redirectUrl !== undefined) {
+              updateData.redirectUrl = req.body.redirectUrl;
+            }
             await prisma.productVariant.update({
               where: { id: product.variants[0].id },
               data: updateData,
@@ -2770,6 +2794,7 @@ export const createProductVariant = asyncHandler(async (req, res, next) => {
     where: { sku: variantSku },
   });
 
+  /* Overriding manual SKU on collision is disabled to respect user input
   if (existingSku) {
     // Generate a completely new unique SKU
     variantSku = generateSKU(
@@ -2778,6 +2803,7 @@ export const createProductVariant = asyncHandler(async (req, res, next) => {
       Math.floor(Math.random() * 100)
     );
   }
+  */
 
   // Create variant
   const variant = await prisma.productVariant.create({
@@ -2788,6 +2814,7 @@ export const createProductVariant = asyncHandler(async (req, res, next) => {
       salePrice: salePrice ? parseFloat(salePrice) : null,
       quantity: parseInt(quantity),
       isActive: true,
+      redirectUrl: req.body.redirectUrl || null,
       attributes:
         attributeValueIds &&
           Array.isArray(attributeValueIds) &&
@@ -2956,6 +2983,7 @@ export const updateProductVariant = asyncHandler(async (req, res, next) => {
     ...(isActive !== undefined && {
       isActive: isActive === "true" || isActive === true,
     }),
+    ...(req.body.redirectUrl !== undefined && { redirectUrl: req.body.redirectUrl }),
   };
 
   // Update attributes if provided
@@ -3972,6 +4000,7 @@ export const bulkVariantOperations = asyncHandler(async (req, res) => {
               quantity: parseInt(variant.quantity || variant.stock || 0),
               isActive:
                 variant.isActive !== undefined ? variant.isActive : true,
+              redirectUrl: variant.redirectUrl !== undefined ? variant.redirectUrl : undefined,
             };
 
             // Handle attributes if provided
@@ -4028,6 +4057,7 @@ export const bulkVariantOperations = asyncHandler(async (req, res) => {
                 quantity: parseInt(variant.quantity || variant.stock || 0),
                 isActive:
                   variant.isActive !== undefined ? variant.isActive : true,
+                redirectUrl: variant.redirectUrl || null,
               };
 
               // Handle attributes if provided
@@ -4075,6 +4105,7 @@ export const bulkVariantOperations = asyncHandler(async (req, res) => {
             salePrice: variant.salePrice ? parseFloat(variant.salePrice) : null,
             quantity: parseInt(variant.quantity || variant.stock || 0),
             isActive: variant.isActive !== undefined ? variant.isActive : true,
+            redirectUrl: variant.redirectUrl || null,
           };
 
           // Handle attributes if provided

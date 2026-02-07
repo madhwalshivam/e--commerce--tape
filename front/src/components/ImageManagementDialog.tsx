@@ -235,12 +235,12 @@ export default function ImageManagementDialog({
                         : "border-gray-200 hover:border-gray-300"
                       }`}
                   >
-                    <div className="h-full w-full bg-gray-100 flex items-center justify-center">
+                    <div className="h-full w-full bg-white flex items-center justify-center">
                       {image.url ? (
                         <img
                           src={image.url}
                           alt={`Image ${index + 1}`}
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-contain p-1"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = "none";

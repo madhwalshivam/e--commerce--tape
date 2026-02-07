@@ -201,10 +201,24 @@ export const updateAdminProfile = asyncHandler(async (req, res, next) => {
 export const changeAdminPassword = asyncHandler(async (req, res, next) => {
   const { currentPassword, newPassword } = req.body;
 
+  // Validate request body
+  if (!currentPassword || !newPassword) {
+    throw new ApiError(400, "Current password and new password are required");
+  }
+
+  // Validate that admin is authenticated
+  if (!req.admin || !req.admin.id) {
+    throw new ApiError(401, "Admin authentication required");
+  }
+
   // Find admin
   const admin = await prisma.admin.findUnique({
     where: { id: req.admin.id },
   });
+
+  if (!admin) {
+    throw new ApiError(404, "Admin not found");
+  }
 
   // Verify current password
   const isPasswordValid = await bcrypt.compare(currentPassword, admin.password);
@@ -392,7 +406,7 @@ export const updateAdminPermissions = asyncHandler(async (req, res) => {
     const createdPermissions = [];
 
     for (const permission of newPermissions) {
-      const createdPermission = await tx.adminPermission.create({
+      const createdPermission = await tx.permission.create({
         data: {
           adminId,
           resource: permission.resource,

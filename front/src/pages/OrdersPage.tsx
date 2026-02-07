@@ -15,7 +15,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
+  Trash2,
+  Truck,
 } from "lucide-react";
+import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
@@ -115,6 +118,25 @@ export default function OrdersPage() {
       case "RETURN_APPROVED": return t('orders.status.return_approved') || "Return Approved";
       case "RETURN_COMPLETED": return t('orders.status.return_completed') || "Return Completed";
       default: return status;
+    }
+  };
+
+
+  // Handle delete order
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!window.confirm(t('orders.actions.delete_confirm'))) return;
+
+    try {
+      const response = await orders.deleteOrder(orderId);
+      if (response && response.data && response.data.success) {
+        toast.success(t('orders.actions.delete_success'));
+        setOrdersList((prev: any) => prev.filter((o: any) => o.id !== orderId));
+      } else {
+        toast.error(response.data?.message || t('orders.actions.delete_error'));
+      }
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      toast.error(t('orders.actions.delete_error'));
     }
   };
 
@@ -353,6 +375,17 @@ export default function OrdersPage() {
                           </span>
                         </div>
                       </div>
+                      {order.parcelxWaybill && (
+                        <div className="md:col-span-2">
+                          <p className="text-[#9CA3AF] mb-1">ParcelX Waybill</p>
+                          <div className="flex items-center gap-1.5">
+                            <Truck className="h-3.5 w-3.5 text-[#4CAF50]" />
+                            <span className="font-mono text-xs text-[#1F2937] bg-[#F0FDF4] px-1.5 py-0.5 rounded border border-[#DCFCE7]">
+                              {order.parcelxWaybill}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -368,21 +401,21 @@ export default function OrdersPage() {
                             parseFloat(order.discount || 0))
                         )}
                       </p>
-                      {order.discount && parseFloat(order.discount) > 0 && (
+                      {order.discount && parseFloat(order.discount) > 0 ? (
                         <p className="text-xs text-[#22C55E] mt-1">
                           {t('orders.list.discount', { amount: formatCurrency(parseFloat(order.discount)) })}
                         </p>
-                      )}
-                      {order.shippingCost && parseFloat(order.shippingCost) > 0 && (
+                      ) : null}
+                      {order.shippingCost && parseFloat(order.shippingCost) > 0 ? (
                         <p className="text-xs text-[#6B7280] mt-1">
                           Shipping: {formatCurrency(parseFloat(order.shippingCost))}
                         </p>
-                      )}
-                      {order.couponCode && (
+                      ) : null}
+                      {order.couponCode ? (
                         <p className="text-xs text-[#22C55E] mt-1">
                           Coupon: {order.couponCode}
                         </p>
-                      )}
+                      ) : null}
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
@@ -395,6 +428,15 @@ export default function OrdersPage() {
                         <Link to={`/orders/${order.id}`}>
                           <Eye className="h-4 w-4 text-[#4B5563]" />
                         </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 hover:bg-[#FEF2F2] group"
+                        onClick={() => handleDeleteOrder(order.id)}
+                        title={t('orders.actions.delete')}
+                      >
+                        <Trash2 className="h-4 w-4 text-[#4B5563] group-hover:text-[#EF4444]" />
                       </Button>
                     </div>
                   </div>

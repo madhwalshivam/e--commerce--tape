@@ -50,6 +50,16 @@ export default function OrdersPage() {
         router.push(`/account/orders?page=${newPage}`);
     };
 
+    const getRecentOrderTitle = (order) => {
+        if (!order || !order.items || order.items.length === 0) return `Order #${order?.orderNumber || ""}`.trim();
+        const firstItem = order.items[0];
+        return (
+            firstItem.product?.name ||
+            firstItem.productName ||
+            `Order #${order.orderNumber}`
+        );
+    };
+
     return (
         <>
             <h1 className="text-3xl font-bold mb-8">My Orders</h1>
@@ -59,7 +69,12 @@ export default function OrdersPage() {
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100 shadow-sm p-5 mb-8">
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
                         <div>
-                            <div className="text-lg font-medium text-blue-800 mb-1">Recent Order: #{orders[0].orderNumber}</div>
+                            <div className="text-lg font-medium text-blue-800 mb-1">
+                                Recent Order: {getRecentOrderTitle(orders[0])}
+                            </div>
+                            <p className="text-xs text-blue-700 mb-1">
+                                Order #{orders[0].orderNumber}
+                            </p>
                             <p className="text-sm text-gray-600 mb-3">Placed on {formatDate(orders[0].date)} • {orders[0].items.length} {orders[0].items.length === 1 ? "item" : "items"} • {formatCurrency(orders[0].total)}</p>
                             <span className={`px-2.5 py-1 ${getStatusColor(orders[0].status)} text-xs font-medium rounded-full inline-block`}>{orders[0].status}</span>
                         </div>

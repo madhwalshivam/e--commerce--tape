@@ -18,7 +18,7 @@ import {
 import { ClientOnly } from "@/components/client-only";
 import { toast } from "sonner";
 
-import { ProductCard } from "@/components/products/ProductCard";
+import { ProductCard } from "@/components/cards/ProductCard";
 import CategoriesCarousel from "@/components/sections/CategoriesCarousel";
 
 // ProductCardSkeleton component

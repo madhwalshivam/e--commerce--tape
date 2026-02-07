@@ -10,8 +10,8 @@ export const getImageUrl = (image) => {
     // Handle object wrapper (e.g. from order details)
     const img = image?.url || image;
 
-    if (!img) return "/placeholder.jpg";
-    if (typeof img !== 'string') return "/placeholder.jpg";
+    if (!img) return "/tape.svg";
+    if (typeof img !== 'string') return "/tape.svg";
 
     // If already a full URL, return as is
     if (img.startsWith("http")) return img;
@@ -24,11 +24,11 @@ export const getImageUrl = (image) => {
 
     if (!storageUrl) {
         console.warn("NEXT_PUBLIC_STORAGE_URL is not set. Images may not load correctly.");
-        return `/${image}`;
+        return `/${img}`;
     }
 
     // Otherwise, prepend the storage URL
-    return `${storageUrl}/${image}`;
+    return `${storageUrl}/${img}`;
 };
 
 /**

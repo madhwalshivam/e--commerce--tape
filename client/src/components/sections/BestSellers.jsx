@@ -6,7 +6,7 @@ import Image from "next/image";
 import { fetchApi, formatCurrency } from "@/lib/utils";
 import { getProductImageUrl as getImageUrl } from "@/lib/imageUrl";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Star, ArrowRight, Eye, Flame } from "lucide-react";
+import { ShoppingCart, Star, ArrowRight, Eye, Flame, Plus } from "lucide-react";
 import { useAddVariantToCart } from "@/lib/cart-utils";
 import { toast } from "sonner";
 import {
@@ -16,6 +16,7 @@ import {
   CarouselPrevious,
   CarouselNext,
 } from "@/components/ui/carousel";
+import { ProductCard } from "@/components/cards/ProductCard";
 
 export function BestSellers() {
   const [products, setProducts] = useState([]);
@@ -42,7 +43,7 @@ export function BestSellers() {
     if (product.variants?.length > 0) {
       const variant = product.variants[0];
       const result = await addVariantToCart(variant, 1, product.name);
-      
+
     }
   };
 
@@ -63,16 +64,15 @@ export function BestSellers() {
   if (!products.length) return null;
 
   return (
-    <section className="section-padding bg-gradient-section">
+    <section className="py-20 bg-gray-50/30">
       <div className="section-container">
-        {/* Header */}
-        <div className="section-header">
-          <span className="section-badge">
-            <Flame className="w-4 h-4" />
-            Best Sellers
-          </span>
-          <h2 className="section-title">Top Selling Products</h2>
-          <p className="section-subtitle">Most loved products by our customers</p>
+        {/* Header - Screenshot 3 Style */}
+        <div className="text-center mb-16 relative">
+          <h2 className="font-sans text-3xl md:text-4xl font-bold tracking-tight uppercase mb-4">
+            <span className="text-black">BEST</span> <span className="text-[#F7941D]">SELLERS</span>
+          </h2>
+          <div className="w-20 h-[3px] bg-[#F7941D] mx-auto mb-6 rounded-full" />
+          <p className="text-gray-400 font-medium tracking-widest uppercase text-[12px]">Our most popular products loved by customers</p>
         </div>
 
         {/* Products Carousel */}
@@ -84,84 +84,23 @@ export function BestSellers() {
             }}
             className="w-full"
           >
-            <CarouselContent className="-ml-4">
+            <CarouselContent className="-ml-3 md:-ml-6">
               {products.map((product, index) => (
-                <CarouselItem key={product.id} className="pl-4 basis-1/2 md:basis-1/3 lg:basis-1/6">
-                  <div className="product-card h-full relative">
-                    {/* Rank Badge */}
-                    <span className="absolute top-3 left-3 w-7 h-7 rounded-full bg-[#2D2D2D] text-white text-xs font-bold flex items-center justify-center shadow-lg z-10">
-                      #{index + 1}
-                    </span>
-
-                    {/* Image */}
-                    <div className="product-image aspect-square relative">
-                      <Link href={`/products/${product.slug}`}>
-                        <Image
-                          src={getImageUrl(product)}
-                          alt={product.name}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
-                        />
-                      </Link>
-
-                      {/* Quick Actions */}
-                      <div className="product-actions">
-                        <button 
-                          onClick={() => handleAddToCart(product)}
-                          className="w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-all"
-                        >
-                          <ShoppingCart className="w-4 h-4" />
-                        </button>
-                        <Link 
-                          href={`/products/${product.slug}`}
-                          className="w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-all"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-3">
-                      <Link href={`/products/${product.slug}`}>
-                        <h3 className="font-semibold text-gray-900 text-xs md:text-sm mb-1 line-clamp-2 hover:text-primary transition-colors min-h-[2.5em]">
-                          {product.name}
-                        </h3>
-                      </Link>
-
-                      {/* Rating */}
-                      {product.avgRating > 0 && (
-                        <div className="flex items-center gap-1 mb-1">
-                          <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                          <span className="text-[10px] text-gray-500">{product.avgRating.toFixed(1)}</span>
-                        </div>
-                      )}
-
-                      {/* Price */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="product-price text-sm">{formatCurrency(product.basePrice)}</span>
-                        {product.hasSale && product.regularPrice > product.basePrice && (
-                          <span className="product-price-old text-xs">{formatCurrency(product.regularPrice)}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                <CarouselItem key={product.id} className="pl-3 md:pl-6 basis-1/2 md:basis-1/3 lg:basis-1/5 xl:basis-1/6">
+                  <ProductCard product={product} />
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="absolute -left-2 top-1/2 -translate-y-1/2 z-10" />
-            <CarouselNext className="absolute -right-2 top-1/2 -translate-y-1/2 z-10" />
-          </Carousel>
-        </div>
 
-        {/* View All */}
-        <div className="text-center mt-10">
-          <Link href="/products?sort=popular">
-            <Button size="lg" variant="outline" className="btn-outline h-12 px-8 gap-2">
-              View All Best Sellers <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
+            {/* Minimalist Controls */}
+            <div className="flex justify-center gap-4 mt-12 md:mt-16">
+              <CarouselPrevious className="relative inset-0 translate-y-0 h-14 w-14 border-2 border-black rounded-none bg-transparent hover:bg-black hover:text-white transition-all duration-300" />
+              <Link href="/products?sort=popular" className="h-14 border-2 border-black flex items-center px-10 font-display font-black text-sm tracking-[0.2em] hover:bg-black hover:text-white transition-all uppercase">
+                Best Sellers
+              </Link>
+              <CarouselNext className="relative inset-0 translate-y-0 h-14 w-14 border-2 border-black rounded-none bg-transparent hover:bg-black hover:text-white transition-all duration-300" />
+            </div>
+          </Carousel>
         </div>
       </div>
     </section>
